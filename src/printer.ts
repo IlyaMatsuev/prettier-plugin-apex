@@ -506,10 +506,12 @@ function handleTriggerDeclarationUnit(
   );
   if (danglingCommentDocs.length > 0) {
     parts.push(indent(concat([hardline, ...danglingCommentDocs])));
+    parts.push(hardline);
   } else if (memberDocs.length > 0) {
     parts.push(indent(concat([hardline, ...memberDocs])));
+    parts.push(hardline);
   }
-  parts.push(dedent(concat([hardline, "}"])));
+  parts.push("}");
   return concat(parts);
 }
 
@@ -563,10 +565,12 @@ function handleInterfaceDeclaration(
   parts.push("{");
   if (danglingCommentDocs.length > 0) {
     parts.push(indent(concat([hardline, ...danglingCommentDocs])));
+    parts.push(hardline);
   } else if (memberDocs.length > 0) {
     parts.push(indent(concat([hardline, ...memberDocs])));
+    parts.push(hardline);
   }
-  parts.push(concat([hardline, "}"]));
+  parts.push("}");
   return concat(parts);
 }
 
@@ -627,10 +631,12 @@ function handleClassDeclaration(
   parts.push("{");
   if (danglingCommentDocs.length > 0) {
     parts.push(indent(concat([hardline, ...danglingCommentDocs])));
+    parts.push(hardline);
   } else if (memberDocs.length > 0) {
     parts.push(indent(concat([hardline, ...memberDocs])));
+    parts.push(hardline);
   }
-  parts.push(concat([hardline, "}"]));
+  parts.push("}");
   return concat(parts);
 }
 
@@ -926,12 +932,14 @@ function handleEnumDeclaration(
   parts.push("{");
   if (danglingCommentDocs.length > 0) {
     parts.push(indent(concat([hardline, ...danglingCommentDocs])));
+    parts.push(hardline);
   } else if (memberDocs.length > 0) {
     parts.push(
       indent(concat([hardline, join(concat([",", hardline]), memberDocs)])),
     );
+    parts.push(hardline);
   }
-  parts.push(concat([hardline, "}"]));
+  parts.push("}");
   return concat(parts);
 }
 
@@ -1020,11 +1028,12 @@ function handleBlockStatement(
   parts.push("{");
   if (danglingCommentDocs.length > 0) {
     parts.push(concat([hardline, ...danglingCommentDocs]));
+    parts.push(dedent(hardline));
   } else if (statementDocs.length > 0) {
     parts.push(hardline);
     parts.push(join(hardline, statementDocs));
+    parts.push(dedent(hardline));
   }
-  parts.push(dedent(hardline));
   parts.push("}");
   return groupIndentConcat(parts);
 }
@@ -1375,6 +1384,7 @@ function handleNewSetLiteral(path: AstPath, print: printFn): Doc {
   parts.push("<");
   parts.push(join(concat([",", " "]), path.map(print, "types")));
   parts.push(">");
+  parts.push(" ");
   // Values
   parts.push("{");
   if (valueDocs.length > 0) {
@@ -1447,6 +1457,7 @@ function handleNewMapLiteral(path: AstPath, print: printFn): Doc {
   parts.push("<");
   parts.push(join(", ", path.map(print, "types")));
   parts.push(">");
+  parts.push(" ");
   // Values
   parts.push("{");
   if (valueDocs.length > 0) {
@@ -1476,6 +1487,7 @@ function handleNewListLiteral(path: AstPath, print: printFn): Doc {
   parts.push("List<");
   parts.push(join(".", path.map(print, "types")));
   parts.push(">");
+  parts.push(" ");
   // Values
   parts.push("{");
   if (valueDocs.length > 0) {
