@@ -14,6 +14,8 @@
 
 ## Formatting Changes
 
+- Fix annotation names to always be upper camel case
+- Add spaces between annotation arguments keys and values
 - Make closing bracket remain on the same line if the block is empty
 - Add additional space before the opening bracket for the collections initialization: `new Map<> {`
 - Fix SOQL Time literals always getting printed in UTC timezone.

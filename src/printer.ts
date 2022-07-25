@@ -11,6 +11,7 @@ import {
   checkIfParentIsDottedExpression,
   getPrecedence,
   isBinaryish,
+  normalizeAnnotationName,
 } from "./util";
 import {
   ASSIGNMENT,
@@ -666,7 +667,7 @@ function handleAnnotation(path: AstPath, print: printFn): Doc {
     }, "comments");
   }
   parts.push("@");
-  parts.push(path.call(print, "name", "value"));
+  parts.push(normalizeAnnotationName(`${path.call(print, "name", "value")}`));
   if (parameterDocs.length > 0) {
     parameterParts.push("(");
     parameterParts.push(softline);
@@ -683,7 +684,9 @@ function handleAnnotation(path: AstPath, print: printFn): Doc {
 function handleAnnotationKeyValue(path: AstPath, print: printFn): Doc {
   const parts: Doc[] = [];
   parts.push(path.call(print, "key", "value"));
+  parts.push(" ");
   parts.push("=");
+  parts.push(" ");
   parts.push(path.call(print, "value"));
   return concat(parts);
 }
