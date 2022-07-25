@@ -1,4 +1,4 @@
-# Prettier Apex
+# Prettier Apex (Forked from dangmai/prettier-plugin-apex)
 
 [![Build Status](https://github.com/dangmai/prettier-plugin-apex/workflows/Tests%20and%20Deployments/badge.svg)](https://github.com/dangmai/prettier-plugin-apex/actions?query=workflow%3A%22Tests+and+Deployments%22) [![npm](https://img.shields.io/npm/v/prettier-plugin-apex.svg)](https://www.npmjs.com/package/prettier-plugin-apex) ![NPM](https://img.shields.io/npm/l/prettier-plugin-apex.svg) [![codecov](https://codecov.io/gh/dangmai/prettier-plugin-apex/branch/master/graph/badge.svg)](https://codecov.io/gh/dangmai/prettier-plugin-apex) [![Known Vulnerabilities](https://snyk.io/test/github/dangmai/prettier-plugin-apex/badge.svg)](https://snyk.io/test/github/dangmai/prettier-plugin-apex) [![Join the chat at https://gitter.im/prettier-plugin-apex/community](https://badges.gitter.im/prettier-plugin-apex/community.svg)](https://gitter.im/prettier-plugin-apex/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -9,6 +9,8 @@ used on the Salesforce development platform.
 
 It uses the excellent [Prettier](https://prettier.io/) engine for formatting,
 and the jorje compiler from Salesforce for parsing.
+
+**Note**: This fork contains several formatting improvements that can be found at the top of the unreleased formatting changes in the [changelog](/CHANGELOG.md)
 
 ## Status
 
@@ -28,10 +30,10 @@ First, install the library:
 
 ```bash
 # Install locally
-npm install --save-dev prettier prettier-plugin-apex
+npm install --save-dev prettier @ilya-matsuev/prettier-plugin-apex
 
 # Or install globally
-npm install --global prettier prettier-plugin-apex
+npm install --global prettier @ilya-matsuev/prettier-plugin-apex
 ```
 
 If you install globally, run:
