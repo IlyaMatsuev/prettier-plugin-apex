@@ -440,3 +440,25 @@ export const ALLOW_DANGLING_COMMENTS = [
   APEX_TYPES.INTERFACE_DECLARATION,
   APEX_TYPES.BLOCK_STATEMENT,
 ];
+
+export const AVAILABLE_ANNOTATIONS = [
+  "AuraEnabled",
+  "Deprecated",
+  "Future",
+  "InvocableMethod",
+  "InvocableVariable",
+  "JsonAccess",
+  "NamespaceAccessible",
+  "RemoteAction",
+  "SuppressWarnings",
+  "TestSetup",
+  "TestVisible",
+  "IsTest",
+  "RestResource",
+  "ReadOnly",
+  "HttpGet",
+  "HttpPost",
+  "HttpPut",
+  "HttpPatch",
+  "HttpDelete",
+];

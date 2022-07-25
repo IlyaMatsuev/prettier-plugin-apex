@@ -4,7 +4,11 @@ import { join } from "path";
 import { accessSync } from "fs";
 
 import jorje from "../vendor/apex-ast-serializer/typings/jorje";
-import { APEX_TYPES, APEX_TYPES as apexTypes } from "./constants";
+import {
+  APEX_TYPES,
+  APEX_TYPES as apexTypes,
+  AVAILABLE_ANNOTATIONS,
+} from "./constants";
 
 export type SerializedAst = {
   [APEX_TYPES.PARSER_OUTPUT]: jorje.ParserOutput;
@@ -257,4 +261,13 @@ export function getSerializerBinDirectory(): string {
     serializerBin = join(__dirname, "../../vendor/apex-ast-serializer/bin");
   }
   return serializerBin;
+}
+
+export function normalizeAnnotationName(name: string): string {
+  return (
+    AVAILABLE_ANNOTATIONS.find(
+      (ann) =>
+        ann.localeCompare(name, undefined, { sensitivity: "accent" }) === 0,
+    ) || name
+  );
 }
