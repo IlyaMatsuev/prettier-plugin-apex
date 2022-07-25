@@ -1,13 +1,13 @@
 {
-  "name": "@ilyamatsuev/prettier-plugin-apex",
+  "name": "@ilya-matsuev/prettier-plugin-apex",
   "version": "1.10.0",
-  "description": "Salesforce Apex plugin for Prettier",
+  "description": "Salesforce Apex plugin for Prettier (Fork of dangmai/prettier-plugin-apex with some formatting adjustments)",
   "main": "dist/src/index.js",
   "bin": {
-    "start-apex-server": "./dist/bin/start-apex-server.js",
-    "stop-apex-server": "./dist/bin/stop-apex-server.js",
-    "apex-ast-serializer": "./vendor/apex-ast-serializer/bin/apex-ast-serializer",
-    "apex-ast-serializer-http": "./vendor/apex-ast-serializer/bin/apex-ast-serializer-http"
+    "start-apex-server": "dist/bin/start-apex-server.js",
+    "stop-apex-server": "dist/bin/stop-apex-server.js",
+    "apex-ast-serializer": "vendor/apex-ast-serializer/bin/apex-ast-serializer",
+    "apex-ast-serializer-http": "vendor/apex-ast-serializer/bin/apex-ast-serializer-http"
   },
   "engines": {
     "node": ">= 14.0.0"
@@ -64,5 +64,16 @@
     "jest-docblock": "^28.0.0",
     "wait-on": "^6.0.0",
     "yargs": "^17.0.0"
-  }
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IlyaMatsuev/prettier-plugin-apex.git"
+  },
+  "bugs": {
+    "url": "https://github.com/IlyaMatsuev/prettier-plugin-apex/issues"
+  },
+  "homepage": "https://github.com/IlyaMatsuev/prettier-plugin-apex#readme"
 }
