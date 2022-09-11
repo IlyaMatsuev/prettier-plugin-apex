@@ -2,7 +2,12 @@
 
 import prettier, { AstPath, Doc, ParserOptions } from "prettier";
 
-import { AnnotatedComment, GenericComment, isApexDocComment } from "./util";
+import {
+  AnnotatedComment,
+  capitalize,
+  GenericComment,
+  isApexDocComment,
+} from "./util";
 import jorje from "../vendor/apex-ast-serializer/typings/jorje";
 
 const { concat, join, lineSuffix, hardline } = prettier.doc.builders;
@@ -16,6 +21,23 @@ const {
 const constants = require("./constants");
 
 const apexTypes = constants.APEX_TYPES;
+
+/**
+ * Formats the inline comment to have a space and start from a capital letter
+ * @param comment the comment to print.
+ */
+function formatInlineComment(comment: string): string {
+  const inlineComment = "//";
+  if (
+    comment.startsWith(inlineComment) &&
+    comment.length > inlineComment.length
+  ) {
+    return `${inlineComment} ${capitalize(
+      comment.substring(inlineComment.length).trim(),
+    )}`;
+  }
+  return comment;
+}
 
 /**
  * Print ApexDoc comment. This is straight from prettier handling of JSDoc
@@ -52,7 +74,7 @@ export function isPrettierIgnore(comment: AnnotatedComment): boolean {
   return content === "prettier-ignore";
 }
 
-export function printComment(path: AstPath): Doc {
+export function printComment(path: AstPath, options: ParserOptions): Doc {
   // This handles both Inline and Block Comments.
   // We don't just pass through the value because unlike other string literals,
   // this should not be escaped
@@ -62,7 +84,9 @@ export function printComment(path: AstPath): Doc {
   if (isApexDocComment(node)) {
     result = printApexDocComment(node);
   } else {
-    result = node.value;
+    result = options.apexFormatInlineComments
+      ? formatInlineComment(node.value)
+      : node.value;
   }
   if (comment.trailingEmptyLine) {
     result = concat([result, hardline]);
@@ -99,9 +123,9 @@ export function printDanglingComment(
     parts.push(...Array(numberOfNewLinesToInsert).fill(hardline));
   }
   if (comment["@class"] === apexTypes.INLINE_COMMENT) {
-    parts.push(lineSuffix(printComment(commentPath)));
+    parts.push(lineSuffix(printComment(commentPath, options)));
   } else {
-    parts.push(printComment(commentPath));
+    parts.push(printComment(commentPath, options));
   }
   comment.printed = true;
   return concat(parts);

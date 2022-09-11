@@ -145,6 +145,13 @@ export const options = {
     description:
       "Keep the open and closing brackets on the same line for the empty blocks.",
   },
+  apexFormatInlineComments: {
+    type: "boolean",
+    category: CATEGORY_APEX,
+    default: false,
+    description:
+      "Formats the inline comments to have a space and start from a capital letter.",
+  },
 };
 
 export const defaultOptions = {};

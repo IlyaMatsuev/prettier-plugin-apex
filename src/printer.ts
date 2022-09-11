@@ -681,7 +681,7 @@ function handleAnnotation(
       // it will be attached to the Annotation's parent node (e.g. MethodDecl)
       if (commentNode.trailing) {
         trailingParts.push(" ");
-        trailingParts.push(printComment(innerPath));
+        trailingParts.push(printComment(innerPath, options));
       }
     }, "comments");
   }

@@ -14,9 +14,10 @@
 
 ## Formatting Changes
 
-- Fix annotation names to always be upper camel case
-- Add spaces between annotation arguments keys and values
-- Make closing bracket remain on the same line if the block is empty
+- Add option to format inline comments
+- Add option to format annotation names to always be upper camel case
+- Add option to add spaces between annotation arguments keys and values
+- Add option to make closing bracket remain on the same line if the block is empty
 - Add additional space before the opening bracket for the collections initialization: `new Map<> {`
 - Fix SOQL Time literals always getting printed in UTC timezone.
 - Fix wrong indentations inside long SELECT functions ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/495)).

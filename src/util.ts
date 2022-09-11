@@ -263,6 +263,10 @@ export function getSerializerBinDirectory(): string {
   return serializerBin;
 }
 
+export function capitalize(str: string): string {
+  return `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
+}
+
 export function normalizeAnnotationName(name: string): string {
   return (
     AVAILABLE_ANNOTATIONS.find(

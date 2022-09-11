@@ -9,6 +9,7 @@ declare module "prettier" {
     apexAnnotationsCamelCase: boolean;
     apexAnnotationsArgsSpacing: boolean;
     apexEmptyBlockBracketLine: boolean;
+    apexFormatInlineComments: boolean;
   }
   namespace __debug {
     export function parse(

@@ -133,6 +133,7 @@ Here is the default configuration that can be overriden:
 | `apexAnnotationsCamelCase`   | `false`     | Convert Apex annotations to the upper camel case.                                                                                                                                                                              |
 | `apexAnnotationsArgsSpacing` | `false`     | Add spaces between an annotation argument and value. For example: `@Future(callout = true)`.                                                                                                                                   |
 | `apexEmptyBlockBracketLine`  | `false`     | Keep the open and closing brackets on the same line for the empty blocks.                                                                                                                                                      |
+| `apexFormatInlineComments`   | `false`     | Formats the inline comments to have a space and start from a capital letter.                                                                                                                                                   |
 
 ## Editor integration
 
