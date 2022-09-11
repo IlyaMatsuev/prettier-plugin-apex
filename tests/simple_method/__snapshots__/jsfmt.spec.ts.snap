@@ -70,7 +70,8 @@ public class SimpleMethod implements FirstSampleInterface, SecondSampleInterface
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 public class SimpleMethod implements FirstSampleInterface, SecondSampleInterface {
-  public String longMethodNameWithNoParamsShouldNotBreakInEmptyParamListAndYetSomehowDoes() {}
+  public String longMethodNameWithNoParamsShouldNotBreakInEmptyParamListAndYetSomehowDoes() {
+  }
 
   public String sayHello() {
     return this.sayHello('Hello', 'World');
@@ -148,8 +149,8 @@ public class SimpleMethod implements FirstSampleInterface, SecondSampleInterface
   }
 
   @InvocableMethod(
-    label = 'Insert Accounts'
-    description = 'Inserts the accounts specified and returns the IDs of the new accounts.'
+    label='Insert Accounts'
+    description='Inserts the accounts specified and returns the IDs of the new accounts.'
   )
   public static List<ID> insertAccounts(List<Account> accounts) {
     return null;

@@ -773,8 +773,8 @@ class Comments {
 /**
  * ApexDoc for class
  */
-@IsTest(
-  seeAllData = true // Class annotation inline comment 1
+@isTest(
+  seeAllData=true // Class annotation inline comment 1
   //isParallel = false // Class annotation inline comment 2
 )
 class Comments {
@@ -964,7 +964,8 @@ class Comments {
     for (
       // Inline SOQL For 1
       Contact a : [SELECT Id FROM Contact]
-    ) {}
+    ) {
+    }
     for (Contact a : [SELECT Id FROM Contact]) {
       // Trailing Inline SOQL For 1
       System.debug('Hello');
@@ -988,7 +989,8 @@ class Comments {
         FROM Contact
         WHERE Id != NULL AND Name != 'Hello'
       ]
-    ) {}
+    ) {
+    }
     for (Contact a : [
       SELECT Id, Name, Description, Birthdate
       FROM Contact
@@ -1010,17 +1012,21 @@ class Comments {
         Id != NULL
         // Inline SOQL for 3
         AND Name != 'Hello'
-    ]) {}
+    ]) {
+    }
     for (
       /* Block SOQL For 1 */
       Contact a : [SELECT Id FROM Contact]
-    ) {}
-    for (/* Block SOQL For 2 */ Contact a : [SELECT Id FROM Contact]) {}
+    ) {
+    }
+    for (/* Block SOQL For 2 */ Contact a : [SELECT Id FROM Contact]) {
+    }
     for (/* Block SOQL For 2 */ Contact a : [
       SELECT Id, Name, Description, Birthdate
       FROM Contact
       WHERE Id != NULL AND Name != 'Hello'
-    ]) {}
+    ]) {
+    }
   }
 
   void trailingCommentAfterStatement() {
@@ -1118,11 +1124,14 @@ class Comments {
 
     switch on s {
       // January comment
-      when JANUARY {}
+      when JANUARY {
+      }
       // February comment
-      when FEBRUARY {}
+      when FEBRUARY {
+      }
       // Default
-      when else {}
+      when else {
+      }
     }
 
     switch on s {
@@ -1142,11 +1151,14 @@ class Comments {
 
     switch on s {
       /* January comment */
-      when JANUARY {}
+      when JANUARY {
+      }
       /* February comment */
-      when FEBRUARY {}
+      when FEBRUARY {
+      }
       /* Default */
-      when else {}
+      when else {
+      }
     }
   }
 
@@ -1314,7 +1326,8 @@ class Comments {
       // In between Inline Comment 4
     }
 
-    if (true) {} else {
+    if (true) {
+    } else {
       // In between Inline Comment 5
       System.debug('Hello');
     }
@@ -1333,7 +1346,8 @@ class Comments {
       /* In between Block Comment 4 */
     }
 
-    if (true) {} else {
+    if (true) {
+    } else {
       /* In between Block Comment 5 */
       System.debug('Hello');
     }
@@ -1464,43 +1478,45 @@ class Comments {
     );
   }
 
-  @IsTest // Decorator Trailing Inline Comment 1
+  @isTest // Decorator Trailing Inline Comment 1
   void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  /* Decorator Leading Block Comment 1 */ @IsTest
+  /* Decorator Leading Block Comment 1 */ @isTest
   void leadingCommentBeforeAnnotation() {
     System.debug('Hi');
   }
 
-  @IsTest // Decorator Trailing Inline Comment 2
+  @isTest // Decorator Trailing Inline Comment 2
   @AuraEnabled // Decorater Trailing Inline Comment 3
   void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  @IsTest /* Decorator Trailing Block Comment 1 */
+  @isTest /* Decorator Trailing Block Comment 1 */
   void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  /* Decorator Leading Block Comment 1 */ @IsTest
+  /* Decorator Leading Block Comment 1 */ @isTest
   void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  @IsTest(
-    seeAllData = true // Method annotation inline comment 1
+  @isTest(
+    seeAllData=true // Method annotation inline comment 1
     //isParallel = false // Method annotation inline comment 2
   )
-  void methodAnnotationInlineComment() {}
+  void methodAnnotationInlineComment() {
+  }
 
-  @IsTest(
-    seeAllData = true /* Method annotation block comment 1 */
+  @isTest(
+    seeAllData=true /* Method annotation block comment 1 */
     /*isParallel = false // Method annotation block comment 2 */
   )
-  void methodAnnotationBlockComment() {}
+  void methodAnnotationBlockComment() {
+  }
 }
 // Trailing Inline Comment
 

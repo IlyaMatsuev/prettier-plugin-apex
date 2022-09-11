@@ -464,7 +464,7 @@ function handleAnonymousBlockUnit(path: AstPath, print: printFn): Doc {
 function handleTriggerDeclarationUnit(
   path: AstPath,
   print: printFn,
-  options: any,
+  options: prettier.ParserOptions,
 ) {
   const usageDocs: Doc[] = path.map(print, "usages");
   const targetDocs: Doc[] = path.map(print, "target");
@@ -507,9 +507,14 @@ function handleTriggerDeclarationUnit(
   );
   if (danglingCommentDocs.length > 0) {
     parts.push(indent(concat([hardline, ...danglingCommentDocs])));
-    parts.push(hardline);
   } else if (memberDocs.length > 0) {
     parts.push(indent(concat([hardline, ...memberDocs])));
+  }
+  if (
+    danglingCommentDocs.length ||
+    memberDocs.length ||
+    !options.apexEmptyBlockBracketLine
+  ) {
     parts.push(hardline);
   }
   parts.push("}");
@@ -519,7 +524,7 @@ function handleTriggerDeclarationUnit(
 function handleInterfaceDeclaration(
   path: AstPath,
   print: printFn,
-  options: any,
+  options: prettier.ParserOptions,
 ) {
   const node = path.getValue();
 
@@ -566,9 +571,14 @@ function handleInterfaceDeclaration(
   parts.push("{");
   if (danglingCommentDocs.length > 0) {
     parts.push(indent(concat([hardline, ...danglingCommentDocs])));
-    parts.push(hardline);
   } else if (memberDocs.length > 0) {
     parts.push(indent(concat([hardline, ...memberDocs])));
+  }
+  if (
+    danglingCommentDocs.length ||
+    memberDocs.length ||
+    !options.apexEmptyBlockBracketLine
+  ) {
     parts.push(hardline);
   }
   parts.push("}");
@@ -578,7 +588,7 @@ function handleInterfaceDeclaration(
 function handleClassDeclaration(
   path: AstPath,
   print: printFn,
-  options: any,
+  options: prettier.ParserOptions,
 ): Doc {
   const node = path.getValue();
 
@@ -632,16 +642,25 @@ function handleClassDeclaration(
   parts.push("{");
   if (danglingCommentDocs.length > 0) {
     parts.push(indent(concat([hardline, ...danglingCommentDocs])));
-    parts.push(hardline);
   } else if (memberDocs.length > 0) {
     parts.push(indent(concat([hardline, ...memberDocs])));
+  }
+  if (
+    danglingCommentDocs.length ||
+    memberDocs.length ||
+    !options.apexEmptyBlockBracketLine
+  ) {
     parts.push(hardline);
   }
   parts.push("}");
   return concat(parts);
 }
 
-function handleAnnotation(path: AstPath, print: printFn): Doc {
+function handleAnnotation(
+  path: AstPath,
+  print: printFn,
+  options: prettier.ParserOptions,
+): Doc {
   const node = path.getValue();
   const parts: Doc[] = [];
   const trailingParts: Doc[] = [];
@@ -667,7 +686,11 @@ function handleAnnotation(path: AstPath, print: printFn): Doc {
     }, "comments");
   }
   parts.push("@");
-  parts.push(normalizeAnnotationName(`${path.call(print, "name", "value")}`));
+  let annotationName = path.call(print, "name", "value");
+  if (options.apexAnnotationsCamelCase) {
+    annotationName = normalizeAnnotationName(`${annotationName}`);
+  }
+  parts.push(annotationName);
   if (parameterDocs.length > 0) {
     parameterParts.push("(");
     parameterParts.push(softline);
@@ -681,12 +704,20 @@ function handleAnnotation(path: AstPath, print: printFn): Doc {
   return concat(parts);
 }
 
-function handleAnnotationKeyValue(path: AstPath, print: printFn): Doc {
+function handleAnnotationKeyValue(
+  path: AstPath,
+  print: printFn,
+  options: prettier.ParserOptions,
+): Doc {
   const parts: Doc[] = [];
   parts.push(path.call(print, "key", "value"));
-  parts.push(" ");
+  if (options.apexAnnotationsArgsSpacing) {
+    parts.push(" ");
+  }
   parts.push("=");
-  parts.push(" ");
+  if (options.apexAnnotationsArgsSpacing) {
+    parts.push(" ");
+  }
   parts.push(path.call(print, "value"));
   return concat(parts);
 }
@@ -920,7 +951,7 @@ function handleDmlMergeStatement(path: AstPath, print: printFn): Doc {
 function handleEnumDeclaration(
   path: AstPath,
   print: printFn,
-  options: any,
+  options: prettier.ParserOptions,
 ): Doc {
   const modifierDocs: Doc[] = path.map(print, "modifiers");
   const memberDocs: Doc[] = path.map(print, "members");
@@ -935,11 +966,16 @@ function handleEnumDeclaration(
   parts.push("{");
   if (danglingCommentDocs.length > 0) {
     parts.push(indent(concat([hardline, ...danglingCommentDocs])));
-    parts.push(hardline);
   } else if (memberDocs.length > 0) {
     parts.push(
       indent(concat([hardline, join(concat([",", hardline]), memberDocs)])),
     );
+  }
+  if (
+    danglingCommentDocs.length ||
+    memberDocs.length ||
+    !options.apexEmptyBlockBracketLine
+  ) {
     parts.push(hardline);
   }
   parts.push("}");
@@ -1022,7 +1058,7 @@ function handleRunAsBlock(path: AstPath, print: printFn): Doc {
 function handleBlockStatement(
   path: AstPath,
   print: printFn,
-  options: any,
+  options: prettier.ParserOptions,
 ): Doc {
   const parts: Doc[] = [];
   const danglingCommentDocs = getDanglingCommentDocs(path, print, options);
@@ -1031,10 +1067,15 @@ function handleBlockStatement(
   parts.push("{");
   if (danglingCommentDocs.length > 0) {
     parts.push(concat([hardline, ...danglingCommentDocs]));
-    parts.push(dedent(hardline));
   } else if (statementDocs.length > 0) {
     parts.push(hardline);
     parts.push(join(hardline, statementDocs));
+  }
+  if (
+    danglingCommentDocs.length ||
+    statementDocs.length ||
+    !options.apexEmptyBlockBracketLine
+  ) {
     parts.push(dedent(hardline));
   }
   parts.push("}");

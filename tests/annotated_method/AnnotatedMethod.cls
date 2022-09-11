@@ -1,11 +1,11 @@
 class topLevelClass {
-  @AuraEnabled
+  @auraenabled
   public String someProperty {
     get;
     set;
   }
 
-  @AuraEnabled(cacheable=true continuation=true)
+  @auraEnabled(cacheable=true continuation=true)
   public static Account getAccount(Id accountId) {
   }
 
@@ -21,7 +21,7 @@ class topLevelClass {
   @InvocableMethod(callout=true)
   List<String> getAccountNamesWithCallout(List<ID> ids) {}
 
-  @InvocableMethod
+  @invocablemethod
   public static List <Results> execute (List<Requests> requestList) {}
 
   @InvocableVariable(label='Records for Input' description='yourDescription' required=true)

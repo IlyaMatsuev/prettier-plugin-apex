@@ -125,6 +125,26 @@ export const options = {
     description:
       "Whether to insert one newline as the last thing in the output. Default to true.",
   },
+  apexAnnotationsCamelCase: {
+    type: "boolean",
+    category: CATEGORY_APEX,
+    default: false,
+    description: "Convert Apex annotations to the upper camel case.",
+  },
+  apexAnnotationsArgsSpacing: {
+    type: "boolean",
+    category: CATEGORY_APEX,
+    default: false,
+    description:
+      "Add spaces between an annotation argument and value. For example: `@Future(callout = true)",
+  },
+  apexEmptyBlockBracketLine: {
+    type: "boolean",
+    category: CATEGORY_APEX,
+    default: false,
+    description:
+      "Keep the open and closing brackets on the same line for the empty blocks.",
+  },
 };
 
 export const defaultOptions = {};

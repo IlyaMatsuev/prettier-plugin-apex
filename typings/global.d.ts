@@ -6,6 +6,9 @@ declare module "prettier" {
     apexStandalonePort: number;
     apexStandaloneHost: string;
     apexInsertFinalNewline: boolean;
+    apexAnnotationsCamelCase: boolean;
+    apexAnnotationsArgsSpacing: boolean;
+    apexEmptyBlockBracketLine: boolean;
   }
   namespace __debug {
     export function parse(

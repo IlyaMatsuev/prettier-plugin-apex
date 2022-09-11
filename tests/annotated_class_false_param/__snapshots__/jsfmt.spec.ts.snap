@@ -5,7 +5,8 @@ exports[`Format apex: AnnotatedFalseParamClass.cls: AnnotatedFalseParamClass.cls
 {}
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-@IsTest(SeeAllData = false)
-class AnnotatedFalseParamClass {}
+@IsTest(SeeAllData=false)
+class AnnotatedFalseParamClass {
+}
 
 `;
