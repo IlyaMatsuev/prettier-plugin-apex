@@ -1,3 +1,0 @@
-@isTest class AnnotatedClassCamelCase
-{}
-

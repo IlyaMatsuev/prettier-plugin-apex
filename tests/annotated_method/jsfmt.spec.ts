@@ -1,5 +1,5 @@
 runSpec(__dirname, ["apex"], {
-  apexAnnotationsCamelCase: true,
+  apexFormatAnnotations: true,
   apexAnnotationsArgsSpacing: true,
   apexEmptyBlockBracketLine: true,
 });

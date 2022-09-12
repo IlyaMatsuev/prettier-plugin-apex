@@ -1,5 +1,5 @@
 /* eslint no-param-reassign: 0 */
-import { AstPath } from "prettier";
+import { AstPath, Doc } from "prettier";
 import { join } from "path";
 import { accessSync } from "fs";
 
@@ -7,7 +7,8 @@ import jorje from "../vendor/apex-ast-serializer/typings/jorje";
 import {
   APEX_TYPES,
   APEX_TYPES as apexTypes,
-  AVAILABLE_ANNOTATIONS,
+  STANDARD_APEX_ANNOTATIONS,
+  STANDARD_APEX_TYPES,
 } from "./constants";
 
 export type SerializedAst = {
@@ -263,15 +264,35 @@ export function getSerializerBinDirectory(): string {
   return serializerBin;
 }
 
-export function capitalize(str: string): string {
-  return `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
-}
-
-export function normalizeAnnotationName(name: string): string {
+function normalizeName(name: Doc, normalizedNames: string[]): Doc {
+  if (typeof name !== "string") {
+    return name;
+  }
   return (
-    AVAILABLE_ANNOTATIONS.find(
-      (ann) =>
-        ann.localeCompare(name, undefined, { sensitivity: "accent" }) === 0,
+    normalizedNames.find(
+      (n) => n.localeCompare(name, undefined, { sensitivity: "accent" }) === 0,
     ) || name
   );
+}
+
+export function capitalize(input: Doc = ""): Doc {
+  if (typeof input !== "string") {
+    return input;
+  }
+  return `${input.charAt(0).toUpperCase()}${input.slice(1)}`;
+}
+
+export function uncapitalize(input: Doc = ""): Doc {
+  if (typeof input !== "string") {
+    return input;
+  }
+  return `${input.charAt(0).toLowerCase()}${input.slice(1)}`;
+}
+
+export function normalizeAnnotationName(name: Doc): Doc {
+  return normalizeName(name, STANDARD_APEX_ANNOTATIONS);
+}
+
+export function normalizeTypeName(name: Doc): Doc {
+  return normalizeName(name, STANDARD_APEX_TYPES);
 }

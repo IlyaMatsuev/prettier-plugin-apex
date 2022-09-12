@@ -125,11 +125,25 @@ export const options = {
     description:
       "Whether to insert one newline as the last thing in the output. Default to true.",
   },
-  apexAnnotationsCamelCase: {
+  apexFormatAnnotations: {
     type: "boolean",
     category: CATEGORY_APEX,
     default: false,
-    description: "Convert Apex annotations to the upper camel case.",
+    description: "Format Apex annotations to the upper camel case.",
+  },
+  apexFormatStandardTypes: {
+    type: "boolean",
+    category: CATEGORY_APEX,
+    default: false,
+    description:
+      "Format the most popular Apex standard types. For example: `System`, `Map`, `DateTime`, `SObject` etc.",
+  },
+  apexFormatInlineComments: {
+    type: "boolean",
+    category: CATEGORY_APEX,
+    default: false,
+    description:
+      "Formats the inline comments to have a space and start from a capital letter.",
   },
   apexAnnotationsArgsSpacing: {
     type: "boolean",
@@ -144,13 +158,6 @@ export const options = {
     default: false,
     description:
       "Keep the open and closing brackets on the same line for the empty blocks.",
-  },
-  apexFormatInlineComments: {
-    type: "boolean",
-    category: CATEGORY_APEX,
-    default: false,
-    description:
-      "Formats the inline comments to have a space and start from a capital letter.",
   },
 };
 

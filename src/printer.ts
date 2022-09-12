@@ -12,6 +12,7 @@ import {
   getPrecedence,
   isBinaryish,
   normalizeAnnotationName,
+  normalizeTypeName,
 } from "./util";
 import {
   ASSIGNMENT,
@@ -294,7 +295,11 @@ function handleArrayExpressionIndex(
   return withGroup ? groupIndentConcat(parts) : concat(parts);
 }
 
-function handleVariableExpression(path: AstPath, print: printFn): Doc {
+function handleVariableExpression(
+  path: AstPath,
+  print: printFn,
+  options: prettier.ParserOptions,
+): Doc {
   const node = path.getValue();
   const parentNode = path.getParentNode();
   const nodeName = path.getName();
@@ -312,8 +317,19 @@ function handleVariableExpression(path: AstPath, print: printFn): Doc {
 
   parts.push(dottedExpressionDoc);
   // Name chain
-  const nameDocs: Doc[] = path.map(print, "names");
-  parts.push(join(".", nameDocs));
+  let names: Doc[] = path.map(print, "names");
+  if (options.apexFormatStandardTypes) {
+    names = names.map((n) => {
+      const normalized = normalizeTypeName(n);
+      // It's possible to have a field of class with the lowecase name id
+      // private Id id;
+      // In this case the following statement: Id result = customEntity.id;
+      // Would result in this: Id result = customEntity.Id;
+      // Which is not preferable. So, if we see an 'id' name in the variable assignment expression, don't format it and leave it as it is
+      return normalized === "Id" ? n : normalized;
+    });
+  }
+  parts.push(join(".", names));
 
   // Technically, in a typical array expression (e.g: a[b]),
   // the variable expression is a child of the array expression.
@@ -554,6 +570,7 @@ function handleInterfaceDeclaration(
   }
   parts.push("interface");
   parts.push(" ");
+  // TODO: Do I want to capitalize interface names?
   parts.push(path.call(print, "name"));
   if (node.typeArguments.value) {
     const typeArgumentParts: Doc[] = path.map(print, "typeArguments", "value");
@@ -618,6 +635,7 @@ function handleClassDeclaration(
   }
   parts.push("class");
   parts.push(" ");
+  // TODO: Do I want to capitalize the class name?
   parts.push(path.call(print, "name"));
   if (node.typeArguments.value) {
     const typeArgumentParts: Doc[] = path.map(print, "typeArguments", "value");
@@ -687,8 +705,8 @@ function handleAnnotation(
   }
   parts.push("@");
   let annotationName = path.call(print, "name", "value");
-  if (options.apexAnnotationsCamelCase) {
-    annotationName = normalizeAnnotationName(`${annotationName}`);
+  if (options.apexFormatAnnotations) {
+    annotationName = normalizeAnnotationName(annotationName);
   }
   parts.push(annotationName);
   if (parameterDocs.length > 0) {
@@ -752,9 +770,17 @@ function handleAnnotationString(path: AstPath, print: printFn): Doc {
   return concat(parts);
 }
 
-function handleClassTypeRef(path: AstPath, print: printFn): Doc {
+function handleClassTypeRef(
+  path: AstPath,
+  print: printFn,
+  options: prettier.ParserOptions,
+): Doc {
   const parts: Doc[] = [];
-  parts.push(join(".", path.map(print, "names")));
+  let names = path.map(print, "names");
+  if (options.apexFormatStandardTypes) {
+    names = names.map(normalizeTypeName);
+  }
+  parts.push(join(".", names));
   const typeArgumentDocs: Doc[] = path.map(print, "typeArguments");
   if (typeArgumentDocs.length > 0) {
     parts.push("<");
@@ -830,6 +856,8 @@ function handlePropertyGetterSetter(
   return (path: AstPath, print: printFn) => {
     const statementDoc: Doc = path.call(print, "stmnt", "value");
 
+    // TODO: Get statementDoc as string and remove line breaks if the apexExpandProperties option is provided
+
     const parts: Doc[] = [];
     parts.push(path.call(print, "modifier", "value"));
     parts.push(action);
@@ -855,7 +883,18 @@ function handleMethodDeclaration(path: AstPath, print: printFn): Doc {
     parts.push(concat(modifierDocs));
   }
   // Return type
+  // TODO: Do I want to make method names uncapitalized?
   pushIfExist(parts, path.call(print, "type", "value"), [" "]);
+  // const returnType = path.call(print, "type", "value");
+  // if (returnType) {
+  //   // For methods
+  //   parts.push(returnType);
+  //   parts.push(" ");
+  //   parts.push(uncapitalize(path.call(print, "name")));
+  // } else {
+  //   // For constructors
+  //   parts.push(capitalize(path.call(print, "name")));
+  // }
   // Method name
   parts.push(path.call(print, "name"));
   // Params
@@ -961,6 +1000,7 @@ function handleEnumDeclaration(
   pushIfExist(parts, join("", modifierDocs));
   parts.push("enum");
   parts.push(" ");
+  // TODO: Do I want to capitalize enum names?
   parts.push(path.call(print, "name"));
   parts.push(" ");
   parts.push("{");
@@ -1247,7 +1287,11 @@ function handleSuperMethodCallExpression(path: AstPath, print: printFn): Doc {
   return groupIndentConcat(parts);
 }
 
-function handleMethodCallExpression(path: AstPath, print: printFn): Doc {
+function handleMethodCallExpression(
+  path: AstPath,
+  print: printFn,
+  options: prettier.ParserOptions,
+): Doc {
   const node = path.getValue();
   const parentNode = path.getParentNode();
   const nodeName = path.getName();
@@ -1270,7 +1314,19 @@ function handleMethodCallExpression(path: AstPath, print: printFn): Doc {
     dottedExpr.value["@class"] === APEX_TYPES.SUPER_VARIABLE_EXPRESSION;
 
   const dottedExpressionDoc = handleDottedExpression(path, print);
-  const nameDocs: Doc[] = path.map(print, "names");
+  let names: Doc[] = path.map(print, "names");
+  if (options.apexFormatStandardTypes) {
+    // TODO: Do I want to uncapitalize method names?
+    names = names.map((n) => {
+      const normalized = normalizeTypeName(n);
+      // It's possible to have a field of class with the lowecase name id
+      // private Id id;
+      // In this case the following statement: Id result = customEntity.id.toString();
+      // Would result in this: Id result = customEntity.Id.toString();
+      // Which is not preferable. So, if we see an 'id' name in the variable assignment expression, don't format it and leave it as it is
+      return normalized === "Id" ? n : normalized;
+    });
+  }
   const paramDocs: Doc[] = path.map(print, "inputParameters");
 
   const resultParamDoc =
@@ -1282,7 +1338,7 @@ function handleMethodCallExpression(path: AstPath, print: printFn): Doc {
         ])
       : "";
 
-  const methodCallChainDoc = join(".", nameDocs);
+  const methodCallChainDoc = join(".", names);
 
   // Handling the array expression index.
   // Technically, in this statement: a()[b],
