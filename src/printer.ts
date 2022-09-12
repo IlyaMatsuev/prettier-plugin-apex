@@ -1,4 +1,4 @@
-import prettier, { AstPath, Doc } from "prettier";
+import prettier, { AstPath, Doc, ParserOptions } from "prettier";
 import { builders } from "prettier/doc";
 import {
   getTrailingComments,
@@ -35,6 +35,7 @@ import Concat = builders.Concat;
 const docBuilders = prettier.doc.builders;
 const { align, concat, join, hardline, line, softline, group, indent, dedent } =
   docBuilders;
+const { printDocToString } = prettier.doc.printer;
 
 type printFn = (path: AstPath) => Doc;
 
@@ -74,6 +75,26 @@ function pushIfExist(
     }
   }
   return parts;
+}
+
+function isOneLineStatement(textStatement: string): boolean {
+  // Text statement looks like this: {
+  //   return 'test';
+  // }
+  const oneLineStatementBreaksCount = 2;
+  return (
+    (textStatement.match(/\n/g) || []).length <= oneLineStatementBreaksCount
+  );
+}
+
+function handleExpandedBlockStatement(
+  statement: Doc,
+  options: ParserOptions,
+): Doc {
+  const textStatement = printDocToString(statement, options).formatted;
+  return isOneLineStatement(textStatement)
+    ? textStatement.replace(/\s+/g, " ")
+    : statement;
 }
 
 function escapeString(text: string): string {
@@ -298,7 +319,7 @@ function handleArrayExpressionIndex(
 function handleVariableExpression(
   path: AstPath,
   print: printFn,
-  options: prettier.ParserOptions,
+  options: ParserOptions,
 ): Doc {
   const node = path.getValue();
   const parentNode = path.getParentNode();
@@ -375,7 +396,7 @@ function handleJavaVariableExpression(path: AstPath, print: printFn): Doc {
 function handleLiteralExpression(
   path: AstPath,
   print: printFn,
-  options: prettier.ParserOptions,
+  options: ParserOptions,
 ): Doc {
   const node = path.getValue();
   const literalType: Doc = path.call(print, "type", "$");
@@ -480,7 +501,7 @@ function handleAnonymousBlockUnit(path: AstPath, print: printFn): Doc {
 function handleTriggerDeclarationUnit(
   path: AstPath,
   print: printFn,
-  options: prettier.ParserOptions,
+  options: ParserOptions,
 ) {
   const usageDocs: Doc[] = path.map(print, "usages");
   const targetDocs: Doc[] = path.map(print, "target");
@@ -540,7 +561,7 @@ function handleTriggerDeclarationUnit(
 function handleInterfaceDeclaration(
   path: AstPath,
   print: printFn,
-  options: prettier.ParserOptions,
+  options: ParserOptions,
 ) {
   const node = path.getValue();
 
@@ -570,7 +591,6 @@ function handleInterfaceDeclaration(
   }
   parts.push("interface");
   parts.push(" ");
-  // TODO: Do I want to capitalize interface names?
   parts.push(path.call(print, "name"));
   if (node.typeArguments.value) {
     const typeArgumentParts: Doc[] = path.map(print, "typeArguments", "value");
@@ -605,7 +625,7 @@ function handleInterfaceDeclaration(
 function handleClassDeclaration(
   path: AstPath,
   print: printFn,
-  options: prettier.ParserOptions,
+  options: ParserOptions,
 ): Doc {
   const node = path.getValue();
 
@@ -635,7 +655,6 @@ function handleClassDeclaration(
   }
   parts.push("class");
   parts.push(" ");
-  // TODO: Do I want to capitalize the class name?
   parts.push(path.call(print, "name"));
   if (node.typeArguments.value) {
     const typeArgumentParts: Doc[] = path.map(print, "typeArguments", "value");
@@ -677,7 +696,7 @@ function handleClassDeclaration(
 function handleAnnotation(
   path: AstPath,
   print: printFn,
-  options: prettier.ParserOptions,
+  options: ParserOptions,
 ): Doc {
   const node = path.getValue();
   const parts: Doc[] = [];
@@ -725,7 +744,7 @@ function handleAnnotation(
 function handleAnnotationKeyValue(
   path: AstPath,
   print: printFn,
-  options: prettier.ParserOptions,
+  options: ParserOptions,
 ): Doc {
   const parts: Doc[] = [];
   parts.push(path.call(print, "key", "value"));
@@ -773,7 +792,7 @@ function handleAnnotationString(path: AstPath, print: printFn): Doc {
 function handleClassTypeRef(
   path: AstPath,
   print: printFn,
-  options: prettier.ParserOptions,
+  options: ParserOptions,
 ): Doc {
   const parts: Doc[] = [];
   let names = path.map(print, "names");
@@ -852,18 +871,19 @@ function handlePropertyDeclaration(path: AstPath, print: printFn): Doc {
 
 function handlePropertyGetterSetter(
   action: "get" | "set",
-): (path: AstPath, print: printFn) => Doc {
-  return (path: AstPath, print: printFn) => {
+): (path: AstPath, print: printFn, options: ParserOptions) => Doc {
+  return (path: AstPath, print: printFn, options: ParserOptions) => {
     const statementDoc: Doc = path.call(print, "stmnt", "value");
-
-    // TODO: Get statementDoc as string and remove line breaks if the apexExpandProperties option is provided
-
     const parts: Doc[] = [];
     parts.push(path.call(print, "modifier", "value"));
     parts.push(action);
     if (statementDoc) {
       parts.push(" ");
-      parts.push(statementDoc);
+      parts.push(
+        options.apexExpandOneLineProperties
+          ? statementDoc
+          : handleExpandedBlockStatement(statementDoc, options),
+      );
     } else {
       parts.push(";");
     }
@@ -883,18 +903,7 @@ function handleMethodDeclaration(path: AstPath, print: printFn): Doc {
     parts.push(concat(modifierDocs));
   }
   // Return type
-  // TODO: Do I want to make method names uncapitalized?
   pushIfExist(parts, path.call(print, "type", "value"), [" "]);
-  // const returnType = path.call(print, "type", "value");
-  // if (returnType) {
-  //   // For methods
-  //   parts.push(returnType);
-  //   parts.push(" ");
-  //   parts.push(uncapitalize(path.call(print, "name")));
-  // } else {
-  //   // For constructors
-  //   parts.push(capitalize(path.call(print, "name")));
-  // }
   // Method name
   parts.push(path.call(print, "name"));
   // Params
@@ -990,7 +999,7 @@ function handleDmlMergeStatement(path: AstPath, print: printFn): Doc {
 function handleEnumDeclaration(
   path: AstPath,
   print: printFn,
-  options: prettier.ParserOptions,
+  options: ParserOptions,
 ): Doc {
   const modifierDocs: Doc[] = path.map(print, "modifiers");
   const memberDocs: Doc[] = path.map(print, "members");
@@ -1000,7 +1009,6 @@ function handleEnumDeclaration(
   pushIfExist(parts, join("", modifierDocs));
   parts.push("enum");
   parts.push(" ");
-  // TODO: Do I want to capitalize enum names?
   parts.push(path.call(print, "name"));
   parts.push(" ");
   parts.push("{");
@@ -1098,7 +1106,7 @@ function handleRunAsBlock(path: AstPath, print: printFn): Doc {
 function handleBlockStatement(
   path: AstPath,
   print: printFn,
-  options: prettier.ParserOptions,
+  options: ParserOptions,
 ): Doc {
   const parts: Doc[] = [];
   const danglingCommentDocs = getDanglingCommentDocs(path, print, options);
@@ -1290,7 +1298,7 @@ function handleSuperMethodCallExpression(path: AstPath, print: printFn): Doc {
 function handleMethodCallExpression(
   path: AstPath,
   print: printFn,
-  options: prettier.ParserOptions,
+  options: ParserOptions,
 ): Doc {
   const node = path.getValue();
   const parentNode = path.getParentNode();
@@ -1316,7 +1324,6 @@ function handleMethodCallExpression(
   const dottedExpressionDoc = handleDottedExpression(path, print);
   let names: Doc[] = path.map(print, "names");
   if (options.apexFormatStandardTypes) {
-    // TODO: Do I want to uncapitalize method names?
     names = names.map((n) => {
       const normalized = normalizeTypeName(n);
       // It's possible to have a field of class with the lowecase name id
@@ -2497,7 +2504,7 @@ function handleOrderOperation(
   childClass: string,
   path: AstPath,
   _print: printFn,
-  opts: prettier.ParserOptions,
+  opts: ParserOptions,
 ): Doc {
   const loc = opts.locStart(path.getValue());
   if (loc) {
@@ -2510,7 +2517,7 @@ function handleNullOrderOperation(
   childClass: string,
   path: AstPath,
   _print: printFn,
-  opts: prettier.ParserOptions,
+  opts: ParserOptions,
 ): Doc {
   const loc = opts.locStart(path.getValue());
   if (loc) {
@@ -2881,13 +2888,13 @@ function handleForInit(path: AstPath, print: printFn): Doc[] {
 type singleNodeHandler = (
   path: AstPath,
   print: printFn,
-  options: prettier.ParserOptions,
+  options: ParserOptions,
 ) => Doc;
 type childNodeHandler = (
   childClass: string,
   path: AstPath,
   print: printFn,
-  options: prettier.ParserOptions,
+  options: ParserOptions,
 ) => Doc;
 
 const nodeHandler: { [key: string]: childNodeHandler | singleNodeHandler } = {};
@@ -3147,11 +3154,7 @@ function handleTrailingEmptyLines(doc: Doc, node: any): Doc {
   return doc;
 }
 
-function genericPrint(
-  path: AstPath,
-  options: prettier.ParserOptions,
-  print: printFn,
-) {
+function genericPrint(path: AstPath, options: ParserOptions, print: printFn) {
   const n = path.getValue();
   if (typeof n === "number" || typeof n === "boolean") {
     return n.toString();
@@ -3197,10 +3200,10 @@ function genericPrint(
   );
 }
 
-let options: prettier.ParserOptions;
+let options: ParserOptions;
 export default function printGenerically(
   path: AstPath,
-  opts: prettier.ParserOptions,
+  opts: ParserOptions,
   print: printFn,
 ): Doc {
   if (typeof opts === "object") {

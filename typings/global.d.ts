@@ -11,6 +11,7 @@ declare module "prettier" {
     apexFormatInlineComments: boolean;
     apexAnnotationsArgsSpacing: boolean;
     apexEmptyBlockBracketLine: boolean;
+    apexExpandOneLineProperties: boolean;
   }
   namespace __debug {
     export function parse(

@@ -20,6 +20,7 @@
 - Add option to make closing bracket remain on the same line if the block is empty (`apexEmptyBlockBracketLine`)
 - Add additional space before the opening bracket for the collections initialization: `new Map<> {`
 - Add option to format standard Apex types references (`apexFormatStandardTypes`)
+- Add option to format properties so that if getter or setter has only one statement they are aligned in one line (`apexExpandOneLineProperties`)
 
 ## Formatting Changes
 
