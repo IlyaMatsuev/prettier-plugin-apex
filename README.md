@@ -126,6 +126,7 @@ This is Not Opinionated formatter, so the there are multiple configurations avai
 | `apexAnnotationsArgsSpacing`  | `false`     | Add spaces between an annotation argument and value. For example: `@Future(callout = true)`.                                                                                                                                   |
 | `apexEmptyBlockBracketLine`   | `false`     | Keep the open and closing brackets on the same line for the empty blocks.                                                                                                                                                      |
 | `apexExpandOneLineProperties` | `true`      | Expand properties even if there is only one statement in getter or setter. If the option is `false` the properties will be inline if there is only one statement or if the `printWidth` option is not exceeded.                |
+| `apexExplicitAccessModifier`  | `false`     | Explicitly put the `private` keyword to class members if the access modifier was not provided.                                                                                                                                 |
 
 ## Editor integration
 

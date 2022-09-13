@@ -12,6 +12,7 @@ declare module "prettier" {
     apexAnnotationsArgsSpacing: boolean;
     apexEmptyBlockBracketLine: boolean;
     apexExpandOneLineProperties: boolean;
+    apexExplicitAccessModifier: boolean;
   }
   namespace __debug {
     export function parse(

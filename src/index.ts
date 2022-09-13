@@ -166,6 +166,13 @@ export const options = {
     description:
       "Expand properties even if there is only one statement in getter or setter. If the option is `false` the properties will be inline if there is only one statement or if the `printWidth` option is not exceeded.",
   },
+  apexExplicitAccessModifier: {
+    type: "boolean",
+    category: CATEGORY_APEX,
+    default: false,
+    description:
+      "Explicitly put the `private` keyword to class members if the access modifier was not provided.",
+  },
 };
 
 export const defaultOptions = {};

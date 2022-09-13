@@ -441,6 +441,10 @@ export const ALLOW_DANGLING_COMMENTS = [
   APEX_TYPES.BLOCK_STATEMENT,
 ];
 
+export const DEFAULT_ACCESS_MODIFIER = "private";
+
+export const ACCESS_MODIFIERS = ["private", "protected", "public", "global"];
+
 export const STANDARD_APEX_ANNOTATIONS = [
   "AuraEnabled",
   "Deprecated",

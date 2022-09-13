@@ -28,6 +28,8 @@ import {
   TRIGGER_USAGE,
   QUERY,
   QUERY_WHERE,
+  ACCESS_MODIFIERS,
+  DEFAULT_ACCESS_MODIFIER,
 } from "./constants";
 import jorje from "../vendor/apex-ast-serializer/typings/jorje";
 import Concat = builders.Concat;
@@ -36,6 +38,7 @@ const docBuilders = prettier.doc.builders;
 const { align, concat, join, hardline, line, softline, group, indent, dedent } =
   docBuilders;
 const { printDocToString } = prettier.doc.printer;
+const { findInDoc } = prettier.doc.utils;
 
 type printFn = (path: AstPath) => Doc;
 
@@ -75,6 +78,39 @@ function pushIfExist(
     }
   }
   return parts;
+}
+
+function hasAccessModifiers(modifiers: Doc[], search: Doc[]): boolean {
+  return !!findInDoc(
+    modifiers,
+    (d) => (search.some((a) => d === a) ? d : undefined),
+    undefined,
+  );
+}
+
+function sortModifiers(modifiers: Doc[]): Doc[] {
+  // For annotation there is always "@" at the beginning of the Doc
+  const annotationModifiers = modifiers.filter(
+    (m) => Array.isArray(m) && m[0] === "@",
+  );
+  const nonAnnotationModifiers = modifiers.filter(
+    (m) => !Array.isArray(m) || m[0] !== "@",
+  );
+  // Put annotations first
+  return [...annotationModifiers, ...nonAnnotationModifiers];
+}
+
+function handleDefaultAccessModifier(
+  modifiers: Doc[],
+  options: ParserOptions,
+): Doc[] {
+  if (
+    options.apexExplicitAccessModifier &&
+    !hasAccessModifiers(modifiers, ACCESS_MODIFIERS)
+  ) {
+    modifiers.unshift([DEFAULT_ACCESS_MODIFIER, " "]);
+  }
+  return modifiers;
 }
 
 function isOneLineStatement(textStatement: string): boolean {
@@ -418,7 +454,7 @@ function handleLiteralExpression(
       node.loc.startIndex,
       node.loc.endIndex,
     );
-    const lastCharacter = literal[literal.length - 1]!.toLowerCase();
+    const lastCharacter = literal[literal.length - 1]?.toLowerCase();
     // We handle the letters d and l at the end of Decimal and Long manually:
     // ```
     // Decimal a = 1.0D
@@ -566,7 +602,9 @@ function handleInterfaceDeclaration(
   const node = path.getValue();
 
   const superInterface: Doc = path.call(print, "superInterface", "value");
-  const modifierDocs: Doc[] = path.map(print, "modifiers");
+  const modifierDocs: Doc[] = sortModifiers(
+    handleDefaultAccessModifier(path.map(print, "modifiers"), options),
+  );
   const memberParts = path
     .map(print, "members")
     .filter((member: Doc) => member);
@@ -628,9 +666,10 @@ function handleClassDeclaration(
   options: ParserOptions,
 ): Doc {
   const node = path.getValue();
-
   const superClass: Doc = path.call(print, "superClass", "value");
-  const modifierDocs: Doc[] = path.map(print, "modifiers");
+  const modifierDocs: Doc[] = sortModifiers(
+    handleDefaultAccessModifier(path.map(print, "modifiers"), options),
+  );
   const memberParts = path
     .map(print, "members")
     .filter((member: Doc) => member);
@@ -738,7 +777,7 @@ function handleAnnotation(
   }
   parts.push(...trailingParts);
   parts.push(hardline);
-  return concat(parts);
+  return parts;
 }
 
 function handleAnnotationKeyValue(
@@ -839,13 +878,20 @@ function handleStatementBlockMember(
   };
 }
 
-function handlePropertyDeclaration(path: AstPath, print: printFn): Doc {
-  const modifierDocs: Doc[] = path.map(print, "modifiers");
+function handlePropertyDeclaration(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
+  const modifierDocs: Doc[] = sortModifiers(
+    handleDefaultAccessModifier(path.map(print, "modifiers"), options),
+  );
   const getterDoc: Doc = path.call(print, "getter", "value");
   const setterDoc: Doc = path.call(print, "setter", "value");
 
   const parts: Doc[] = [];
   const innerParts = [];
+
   parts.push(join("", modifierDocs));
   parts.push(path.call(print, "type"));
   parts.push(" ");
@@ -891,16 +937,27 @@ function handlePropertyGetterSetter(
   };
 }
 
-function handleMethodDeclaration(path: AstPath, print: printFn): Doc {
+function handleMethodDeclaration(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
   const statementDoc: Doc = path.call(print, "stmnt", "value");
-  const modifierDocs: Doc[] = path.map(print, "modifiers");
+  let modifierDocs: Doc[] = path.map(print, "modifiers");
   const parameterDocs: Doc[] = path.map(print, "parameters");
 
   const parts: Doc[] = [];
   const parameterParts = [];
   // Modifiers
+  if (statementDoc || hasAccessModifiers(modifierDocs, ["abstract"])) {
+    // There is no statement if this is an interface method or abstract method
+    // But for abstract methods it's possible to have access modifier
+    modifierDocs = sortModifiers(
+      handleDefaultAccessModifier(modifierDocs, options),
+    );
+  }
   if (modifierDocs.length > 0) {
-    parts.push(concat(modifierDocs));
+    parts.push(modifierDocs);
   }
   // Return type
   pushIfExist(parts, path.call(print, "type", "value"), [" "]);
@@ -923,10 +980,21 @@ function handleMethodDeclaration(path: AstPath, print: printFn): Doc {
   return concat(parts);
 }
 
-function handleModifierParameterRef(path: AstPath, print: printFn): Doc {
+function handleModifierParameterRef(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
   const parts: Doc[] = [];
   // Modifiers
-  parts.push(join("", path.map(print, "modifiers")));
+  parts.push(
+    join(
+      "",
+      sortModifiers(
+        handleDefaultAccessModifier(path.map(print, "modifiers"), options),
+      ),
+    ),
+  );
   // Type
   parts.push(path.call(print, "typeRef"));
   parts.push(" ");
@@ -1001,7 +1069,9 @@ function handleEnumDeclaration(
   print: printFn,
   options: ParserOptions,
 ): Doc {
-  const modifierDocs: Doc[] = path.map(print, "modifiers");
+  const modifierDocs: Doc[] = sortModifiers(
+    handleDefaultAccessModifier(path.map(print, "modifiers"), options),
+  );
   const memberDocs: Doc[] = path.map(print, "members");
   const danglingCommentDocs = getDanglingCommentDocs(path, print, options);
 
@@ -1168,11 +1238,21 @@ function handleFinallyBlock(path: AstPath, print: printFn): Doc {
   return concat(parts);
 }
 
-function handleVariableDeclarations(path: AstPath, print: printFn): Doc {
-  const modifierDocs: Doc[] = path.map(print, "modifiers");
-
+function handleVariableDeclarations(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
   const parts: Doc[] = [];
+  let modifierDocs: Doc[] = path.map(print, "modifiers");
+
   // Modifiers
+  if (path.getParentNode()["@class"] === APEX_TYPES.FIELD_MEMBER) {
+    // Add private access modifier if this is a class field
+    modifierDocs = sortModifiers(
+      handleDefaultAccessModifier(modifierDocs, options),
+    );
+  }
   parts.push(join("", modifierDocs));
 
   // Type

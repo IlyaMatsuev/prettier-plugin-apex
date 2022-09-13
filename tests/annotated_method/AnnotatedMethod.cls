@@ -1,12 +1,10 @@
 class topLevelClass {
-  @auraenabled
-  public String someProperty {
+  @auraenabled public String someProperty {
     get;
     set;
   }
 
-  @auraEnabled(cacheable=true continuation=true)
-  public static Account getAccount(Id accountId) {
+  public static @auraEnabled(cacheable=true continuation=true) Account getAccount(Id accountId) {
   }
 
   @SuppressWarnings('PMD.ApexCRUDViolation')
