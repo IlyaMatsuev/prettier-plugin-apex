@@ -1,7 +1,7 @@
 {
-  "name": "@ilya-matsuev/prettier-plugin-apex",
-  "version": "1.10.0",
-  "description": "Salesforce Apex plugin for Prettier (Fork of dangmai/prettier-plugin-apex with some formatting adjustments)",
+  "name": "@ilyamatsuev/prettier-plugin-apex",
+  "version": "2.0.0",
+  "description": "Salesforce Apex plugin for Prettier (Fork of dangmai/prettier-plugin-apex with some formatting adjustments) [Not Opinionated]",
   "main": "dist/src/index.js",
   "bin": {
     "start-apex-server": "dist/bin/start-apex-server.js",

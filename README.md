@@ -1,21 +1,14 @@
-# Prettier Apex (Forked from dangmai/prettier-plugin-apex)
+# Prettier Apex [Not Opinionated]
 
 [![Build Status](https://github.com/dangmai/prettier-plugin-apex/workflows/Tests%20and%20Deployments/badge.svg)](https://github.com/dangmai/prettier-plugin-apex/actions?query=workflow%3A%22Tests+and+Deployments%22) [![npm](https://img.shields.io/npm/v/prettier-plugin-apex.svg)](https://www.npmjs.com/package/prettier-plugin-apex) ![NPM](https://img.shields.io/npm/l/prettier-plugin-apex.svg) [![codecov](https://codecov.io/gh/dangmai/prettier-plugin-apex/branch/master/graph/badge.svg)](https://codecov.io/gh/dangmai/prettier-plugin-apex) [![Known Vulnerabilities](https://snyk.io/test/github/dangmai/prettier-plugin-apex/badge.svg)](https://snyk.io/test/github/dangmai/prettier-plugin-apex) [![Join the chat at https://gitter.im/prettier-plugin-apex/community](https://badges.gitter.im/prettier-plugin-apex/community.svg)](https://gitter.im/prettier-plugin-apex/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ![Prettier Banner](https://raw.githubusercontent.com/prettier/prettier-logo/master/images/prettier-banner-light.png)
 
-This is a code formatter for the Apex Programming Language,
-used on the Salesforce development platform.
+This is a code formatter for the Apex Programming Language, used on the Salesforce development platform.
 
-It uses the excellent [Prettier](https://prettier.io/) engine for formatting,
-and the jorje compiler from Salesforce for parsing.
+It uses the excellent [Prettier](https://prettier.io/) engine for formatting, and the jorje compiler from Salesforce for parsing.
 
-**Note**: This fork contains several formatting improvements that can be found at the top of the unreleased formatting changes in the [changelog](/CHANGELOG.md)
-
-## Status
-
-This project is production ready, and have been tested on multiple projects,
-including a mix of open source/proprietary/Salesforce internal code bases.
+> :warning: **NOTE:** The original project follows the [Prettier Option Philosophy](https://prettier.io/docs/en/option-philosophy.html). This fork DOES NOT follow this strategy and contains several additional configuration options that can be listed below in [the table](#configuration) or in [the changelog](/CHANGELOG.md).
 
 ## Usage
 
@@ -30,10 +23,10 @@ First, install the library:
 
 ```bash
 # Install locally
-npm install --save-dev prettier @ilya-matsuev/prettier-plugin-apex
+npm install --save-dev prettier @ilyamatsuev/prettier-plugin-apex
 
 # Or install globally
-npm install --global prettier @ilya-matsuev/prettier-plugin-apex
+npm install --global prettier @ilyamatsuev/prettier-plugin-apex
 ```
 
 If you install globally, run:
@@ -112,12 +105,9 @@ matrix(
 
 ### Configuration
 
-This library follows the same configuration format as Prettier,
-which is documented [here](https://prettier.io/docs/en/configuration.html).
+This library follows the same configuration format as Prettier, which is documented [here](https://prettier.io/docs/en/configuration.html).
 
-The amount of configuration is very limited,
-because this is intended to be a very opinionated formatter.
-Here is the default configuration that can be overriden:
+This is Not Opinionated formatter, so the there are multiple configurations available. The list can extend in future:
 
 | Name                          | Default     | Description                                                                                                                                                                                                                    |
 | ----------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -126,10 +116,10 @@ Here is the default configuration that can be overriden:
 | `useTabs`                     | `false`     | Same as in Prettier ([see prettier docs](https://prettier.io/docs/en/options.html#tabs))                                                                                                                                       |
 | `requirePragma`               | `false`     | Same as in Prettier ([see prettier docs](https://prettier.io/docs/en/options.html#require-pragma))                                                                                                                             |
 | `insertPragma`                | `false`     | Same as in Prettier ([see prettier docs](https://prettier.io/docs/en/options.html#insert-pragma))                                                                                                                              |
-| `apexInsertFinalNewline`      | `true`      | Whether a newline is added as the last thing in the output                                                                                                                                                                     |
 | `apexStandaloneParser`        | `none`      | If set to `built-in`, Prettier uses the built in standalone parser for better performance. See [Performance Tip](#performance-tips3rd-party-integration).<br>If set to `none`, Prettier invokes the CLI parser for every file. |
 | `apexStandalonePort`          | `2117`      | The port that the standalone Apex parser listens on.<br>Only applicable if `apexStandaloneParser` is `built-in`.                                                                                                               |
 | `apexStandaloneHost`          | `localhost` | The host that the standalone Apex parser listens on.<br>Only applicable if `apexStandaloneParser` is `built-in`.                                                                                                               |
+| `apexInsertFinalNewline`      | `true`      | Whether a newline is added as the last thing in the output                                                                                                                                                                     |
 | `apexFormatAnnotations`       | `false`     | Format Apex annotations to the upper camel case.                                                                                                                                                                               |
 | `apexFormatStandardTypes`     | `false`     | Format the most popular Apex standard types. For example: `System`, `Map`, `DateTime`, `SObject` etc.                                                                                                                          |
 | `apexFormatInlineComments`    | `false`     | Format the inline comments to have a space and start from a capital letter.                                                                                                                                                    |
