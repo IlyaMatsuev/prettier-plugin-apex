@@ -127,6 +127,7 @@ This is Not Opinionated formatter, so the there are multiple configurations avai
 | `apexEmptyBlockBracketLine`   | `false`     | Keep the open and closing brackets on the same line for the empty blocks.                                                                                                                                                      |
 | `apexExpandOneLineProperties` | `true`      | Expand properties even if there is only one statement in getter or setter. If the option is `false` the properties will be inline if there is only one statement or if the `printWidth` option is not exceeded.                |
 | `apexExplicitAccessModifier`  | `false`     | Explicitly put the `private` keyword to class members if the access modifier was not provided.                                                                                                                                 |
+| `apexSortModifiers`           | `false`     | Sort class member modifiers in the certain order. For fields: `<access> static final transient`, for methods: `<access> static/override virtual/abstract`.                                                                     |
 
 ## Editor integration
 

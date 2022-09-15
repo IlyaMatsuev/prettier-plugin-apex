@@ -445,6 +445,16 @@ export const DEFAULT_ACCESS_MODIFIER = "private";
 
 export const ACCESS_MODIFIERS = ["private", "protected", "public", "global"];
 
+export const MODIFIERS_PRIORITY = [
+  ...ACCESS_MODIFIERS,
+  "static",
+  "final",
+  "transient",
+  "virtual",
+  "abstract",
+  "override",
+];
+
 export const STANDARD_APEX_ANNOTATIONS = [
   "AuraEnabled",
   "Deprecated",

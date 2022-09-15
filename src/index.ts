@@ -173,6 +173,13 @@ export const options = {
     description:
       "Explicitly put the `private` keyword to class members if the access modifier was not provided.",
   },
+  apexSortModifiers: {
+    type: "boolean",
+    category: CATEGORY_APEX,
+    default: false,
+    description:
+      "Sort class member modifiers in the certain order. For fields: `<access> static final transient`, for methods: `<access> static/override virtual/abstract`.",
+  },
 };
 
 export const defaultOptions = {};

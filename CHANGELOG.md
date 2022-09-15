@@ -22,6 +22,7 @@
 - Add option to format standard Apex types references (`apexFormatStandardTypes`)
 - Add option to format properties so that if getter or setter has only one statement they are aligned in one line (`apexExpandOneLineProperties`)
 - Add option to explicitly put the `private` keyword if the access modifier was not provided (`apexExplicitAccessModifier`)
+- Add option to place class member modifiers in the specific order. For fields: `<access> static final transient`, for methods: `<access> static/override virtual/abstract` (`apexSortModifiers`)
 
 ## Formatting Changes
 

@@ -30,6 +30,7 @@ import {
   QUERY_WHERE,
   ACCESS_MODIFIERS,
   DEFAULT_ACCESS_MODIFIER,
+  MODIFIERS_PRIORITY,
 } from "./constants";
 import jorje from "../vendor/apex-ast-serializer/typings/jorje";
 import Concat = builders.Concat;
@@ -88,14 +89,34 @@ function hasAccessModifiers(modifiers: Doc[], search: Doc[]): boolean {
   );
 }
 
-function sortModifiers(modifiers: Doc[]): Doc[] {
+function sortModifiers(modifiers: Doc[], options: ParserOptions): Doc[] {
   // For annotation there is always "@" at the beginning of the Doc
   const annotationModifiers = modifiers.filter(
     (m) => Array.isArray(m) && m[0] === "@",
   );
-  const nonAnnotationModifiers = modifiers.filter(
+  let nonAnnotationModifiers = modifiers.filter(
     (m) => !Array.isArray(m) || m[0] !== "@",
   );
+  if (options.apexSortModifiers) {
+    nonAnnotationModifiers = [
+      nonAnnotationModifiers
+        .flat()
+        .filter((m) => typeof m === "string" && m.trim())
+        .sort((a, b) => {
+          const aPriority = MODIFIERS_PRIORITY.indexOf(a as string);
+          const bPriority = MODIFIERS_PRIORITY.indexOf(b as string);
+          if (aPriority === -1) {
+            return 1;
+          }
+          if (bPriority === -1) {
+            return -1;
+          }
+          return aPriority - bPriority;
+        })
+        .join(" ") as Doc,
+      " ",
+    ];
+  }
   // Put annotations first
   return [...annotationModifiers, ...nonAnnotationModifiers];
 }
@@ -604,6 +625,7 @@ function handleInterfaceDeclaration(
   const superInterface: Doc = path.call(print, "superInterface", "value");
   const modifierDocs: Doc[] = sortModifiers(
     handleDefaultAccessModifier(path.map(print, "modifiers"), options),
+    options,
   );
   const memberParts = path
     .map(print, "members")
@@ -669,6 +691,7 @@ function handleClassDeclaration(
   const superClass: Doc = path.call(print, "superClass", "value");
   const modifierDocs: Doc[] = sortModifiers(
     handleDefaultAccessModifier(path.map(print, "modifiers"), options),
+    options,
   );
   const memberParts = path
     .map(print, "members")
@@ -885,6 +908,7 @@ function handlePropertyDeclaration(
 ): Doc {
   const modifierDocs: Doc[] = sortModifiers(
     handleDefaultAccessModifier(path.map(print, "modifiers"), options),
+    options,
   );
   const getterDoc: Doc = path.call(print, "getter", "value");
   const setterDoc: Doc = path.call(print, "setter", "value");
@@ -954,6 +978,7 @@ function handleMethodDeclaration(
     // But for abstract methods it's possible to have access modifier
     modifierDocs = sortModifiers(
       handleDefaultAccessModifier(modifierDocs, options),
+      options,
     );
   }
   if (modifierDocs.length > 0) {
@@ -992,6 +1017,7 @@ function handleModifierParameterRef(
       "",
       sortModifiers(
         handleDefaultAccessModifier(path.map(print, "modifiers"), options),
+        options,
       ),
     ),
   );
@@ -1000,7 +1026,7 @@ function handleModifierParameterRef(
   parts.push(" ");
   // Value
   parts.push(path.call(print, "name"));
-  return concat(parts);
+  return parts;
 }
 
 function handleEmptyModifierParameterRef(path: AstPath, print: printFn): Doc {
@@ -1071,6 +1097,7 @@ function handleEnumDeclaration(
 ): Doc {
   const modifierDocs: Doc[] = sortModifiers(
     handleDefaultAccessModifier(path.map(print, "modifiers"), options),
+    options,
   );
   const memberDocs: Doc[] = path.map(print, "members");
   const danglingCommentDocs = getDanglingCommentDocs(path, print, options);
@@ -1251,6 +1278,7 @@ function handleVariableDeclarations(
     // Add private access modifier if this is a class field
     modifierDocs = sortModifiers(
       handleDefaultAccessModifier(modifierDocs, options),
+      options,
     );
   }
   parts.push(join("", modifierDocs));
@@ -2765,7 +2793,7 @@ function handleModifier(childClass: string): Doc {
       `Modifier ${childClass} is not supported. Please file a bug report.`,
     );
   }
-  return concat([modifierValue, " "]);
+  return [modifierValue, " "];
 }
 
 function handlePostfixExpression(path: AstPath, print: printFn): Doc {

@@ -13,6 +13,7 @@ declare module "prettier" {
     apexEmptyBlockBracketLine: boolean;
     apexExpandOneLineProperties: boolean;
     apexExplicitAccessModifier: boolean;
+    apexSortModifiers: boolean;
   }
   namespace __debug {
     export function parse(

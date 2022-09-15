@@ -1,9 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Format apex: ExplicitAccessModifier.cls: ExplicitAccessModifier.cls 1`] = `
-with sharing @IsTest class ExplicitAccessModifier
+with sharing   public @IsTest class ExplicitAccessModifier
 {
-    public final HttpRequest request;
+    public transient final HttpRequest request;
     private static final HttpRequest request;
     static final HttpRequest request;
     static final transient HttpRequest request;
@@ -20,7 +20,7 @@ with sharing @IsTest class ExplicitAccessModifier
         }
     }
 
-    public final   String nonDefaultGetterSetter {
+    public final  static String nonDefaultGetterSetter {
         protected get {
             return nonDefaultGetterSetter;
         }
@@ -30,7 +30,7 @@ with sharing @IsTest class ExplicitAccessModifier
         }
     }
 
-    @TestVisible String nonDefaultGetterSetter {
+    @TestVisible private String nonDefaultGetterSetter {
         get {
             if (nonDefaultGetterSetter != '') {
                 nonDefaultGetterSetter = '';
@@ -60,7 +60,7 @@ with sharing @IsTest class ExplicitAccessModifier
     @TestVisible
     final static List<UnknownClass.InnerClass> nestedList = new List<UnknownClass.InnerClass>();
 
-    public abstract class NestedClassTest {
+    abstract public without sharing class NestedClassTest {
         String nonDefaultSetter {
             private get;
 
@@ -90,6 +90,13 @@ with sharing @IsTest class ExplicitAccessModifier
         }
 
         @TestVisible abstract void methodTwo();
+
+        abstract public void methodTwo();
+
+        virtual override void methodTwo() {
+        }
+
+        override protected void methodTwo() {}
     }
 
     interface InterfaceTest {
@@ -103,7 +110,7 @@ with sharing @IsTest class ExplicitAccessModifier
     }
 
     @JsonAccess
-    class EnumTest {
+    with sharing class EnumTest {
         public enum Season {WINTER, SPRING, SUMMER, FALL}
         enum Month {JANUARY}
 
@@ -137,8 +144,8 @@ with sharing @IsTest class ExplicitAccessModifier
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 @IsTest
-private with sharing class ExplicitAccessModifier {
-  public final HttpRequest request;
+public with sharing class ExplicitAccessModifier {
+  public final transient HttpRequest request;
   private static final HttpRequest request;
   private static final HttpRequest request;
   private static final transient HttpRequest request;
@@ -154,7 +161,7 @@ private with sharing class ExplicitAccessModifier {
     }
   }
 
-  public final String nonDefaultGetterSetter {
+  public static final String nonDefaultGetterSetter {
     protected get {
       return nonDefaultGetterSetter;
     }
@@ -190,9 +197,9 @@ private with sharing class ExplicitAccessModifier {
   }
 
   @TestVisible
-  private final static List<UnknownClass.InnerClass> nestedList = new List<UnknownClass.InnerClass>();
+  private static final List<UnknownClass.InnerClass> nestedList = new List<UnknownClass.InnerClass>();
 
-  public abstract class NestedClassTest {
+  public abstract without sharing class NestedClassTest {
     private String nonDefaultSetter {
       private get;
       set {
@@ -221,6 +228,14 @@ private with sharing class ExplicitAccessModifier {
 
     @TestVisible
     private abstract void methodTwo();
+
+    public abstract void methodTwo();
+
+    private virtual override void methodTwo() {
+    }
+
+    protected override void methodTwo() {
+    }
   }
 
   private interface InterfaceTest {
@@ -234,7 +249,7 @@ private with sharing class ExplicitAccessModifier {
   }
 
   @JsonAccess
-  private class EnumTest {
+  private with sharing class EnumTest {
     public enum Season {
       WINTER,
       SPRING,
