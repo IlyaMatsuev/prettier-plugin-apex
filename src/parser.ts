@@ -529,7 +529,7 @@ function getLineIndexes(sourceCode: string) {
       break;
     }
     lineIndexes[lineIndex] =
-      lineIndexes[lineIndex - 1]! +
+      (lineIndexes[lineIndex - 1] ?? 0) +
       sourceCode.substring(characterIndex, eolIndex).length +
       1;
     characterIndex = eolIndex + 1;
