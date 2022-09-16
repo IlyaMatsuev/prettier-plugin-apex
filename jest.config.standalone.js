@@ -1,4 +1,4 @@
-const ENABLE_COVERAGE = !!process.env.CI;
+const ENABLE_COVERAGE = !!process.env.ENABLE_CODE_COVERAGE;
 
 // This config does not start up the standalone parser by default
 /** @type {import('ts-jest/dist/types').InitialOptionsTsJest} */
