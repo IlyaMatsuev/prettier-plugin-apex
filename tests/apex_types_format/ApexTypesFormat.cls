@@ -70,6 +70,7 @@ class ApexTypesFormat {
     id w = SCHEMA.sobjecT.ID;
     string e = SCHEMA.sobjecT.ID.toString();
     id r = new Entity().id;
+    e.map(1, 2).set('2')[set(1)];
   }
 
   void newStandardTest() {

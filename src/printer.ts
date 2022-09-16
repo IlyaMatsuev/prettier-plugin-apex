@@ -1432,7 +1432,11 @@ function handleMethodCallExpression(
   const dottedExpressionDoc = handleDottedExpression(path, print);
   let names: Doc[] = path.map(print, "names");
   if (options.apexFormatStandardTypes) {
-    names = names.map((n) => {
+    names = names.map((n, i) => {
+      // The last name is always for method
+      if (names.length - 1 === i) {
+        return n;
+      }
       const normalized = normalizeTypeName(n);
       // It's possible to have a field of class with the lowecase name id
       // private Id id;
