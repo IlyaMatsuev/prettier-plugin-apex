@@ -1,6 +1,6 @@
 {
   "name": "@ilyamatsuev/prettier-plugin-apex",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Salesforce Apex plugin for Prettier (Fork of dangmai/prettier-plugin-apex with some formatting adjustments) [Not Opinionated]",
   "main": "dist/src/index.js",
   "bin": {
@@ -57,7 +57,7 @@
     "typescript": "4.8.3"
   },
   "peerDependencies": {
-    "prettier": "^2.0.0"
+    "prettier": ">= 2.7.x"
   },
   "dependencies": {
     "axios": "^0.27.0",
