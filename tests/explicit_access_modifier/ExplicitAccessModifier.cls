@@ -1,4 +1,4 @@
-with sharing   public @IsTest class ExplicitAccessModifier
+with sharing virtual   public @IsTest class ExplicitAccessModifier
 {
     public transient final HttpRequest request;
     private static final HttpRequest request;

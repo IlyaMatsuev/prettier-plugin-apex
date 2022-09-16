@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Format apex: ExplicitAccessModifier.cls: ExplicitAccessModifier.cls 1`] = `
-with sharing   public @IsTest class ExplicitAccessModifier
+with sharing virtual   public @IsTest class ExplicitAccessModifier
 {
     public transient final HttpRequest request;
     private static final HttpRequest request;
@@ -144,7 +144,7 @@ with sharing   public @IsTest class ExplicitAccessModifier
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 @IsTest
-public with sharing class ExplicitAccessModifier {
+public with sharing virtual class ExplicitAccessModifier {
   public final transient HttpRequest request;
   private static final HttpRequest request;
   private static final HttpRequest request;
@@ -199,7 +199,7 @@ public with sharing class ExplicitAccessModifier {
   @TestVisible
   private static final List<UnknownClass.InnerClass> nestedList = new List<UnknownClass.InnerClass>();
 
-  public abstract without sharing class NestedClassTest {
+  public without sharing abstract class NestedClassTest {
     private String nonDefaultSetter {
       private get;
       set {

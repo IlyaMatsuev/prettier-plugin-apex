@@ -10,6 +10,10 @@ It uses the excellent [Prettier](https://prettier.io/) engine for formatting, an
 
 > :warning: **NOTE:** The original project follows the [Prettier Option Philosophy](https://prettier.io/docs/en/option-philosophy.html). This fork DOES NOT follow this strategy and contains several additional configuration options that can be listed below in [the table](#configuration) or in [the changelog](/CHANGELOG.md).
 
+The purpose of this fork is to improve the original package. Although, the Prettier developers [don't want to add additional options](https://prettier.io/docs/en/option-philosophy.html) saying that this is very _opinionated_ formatter, from my _personal_ experience every company may have their own Apex coding style guidelines and some of these companies will not change their mind and prefer the style that is proposed in the original Apex prettier plugin. For exactly this case this fork has been created. Another reason is that I like an opportunity to configure how my code looks!
+
+## Check out the new formatting options and changes in [the changelog](/CHANGELOG.md) or take a look at [the examples](/CHANGELOG.examples.md)!
+
 ## Usage
 
 ### Requirements
@@ -106,6 +110,8 @@ matrix(
 ### Configuration
 
 This library follows the same configuration format as Prettier, which is documented [here](https://prettier.io/docs/en/configuration.html).
+
+Check out the examples of how to use the new options [here](/CHANGELOG.examples.md).
 
 This is Not Opinionated formatter, so the there are multiple configurations available. The list can extend in future:
 
