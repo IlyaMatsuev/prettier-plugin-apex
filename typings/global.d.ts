@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import prettier from "prettier";
 
 declare module "prettier" {
@@ -16,6 +17,7 @@ declare module "prettier" {
     apexSortModifiers: boolean;
   }
   namespace __debug {
+    // eslint-disable-next-line import/prefer-default-export
     export function parse(
       originalText: string,
       originalOptions: Partial<RequiredOptions>,

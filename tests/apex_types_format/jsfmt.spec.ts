@@ -1,1 +1,4 @@
-runSpec(__dirname, ["apex"], { apexFormatStandardTypes: true });
+runSpec(__dirname, ["apex"], {
+  apexFormatStandardTypes: true,
+  astCompareDisabled: true,
+});

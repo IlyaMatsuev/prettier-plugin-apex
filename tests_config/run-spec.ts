@@ -1,6 +1,6 @@
 import fs from "fs";
 import { extname } from "path";
-import prettier from "prettier";
+import prettier, { Options } from "prettier";
 import { wrap } from "jest-snapshot-serializer-raw";
 
 const { AST_COMPARE } = process.env;
@@ -9,11 +9,7 @@ function read(filename: string): string {
   return fs.readFileSync(filename, "utf8");
 }
 
-function prettyPrint(
-  src: string,
-  filename: string,
-  options: prettier.Options,
-): string {
+function prettyPrint(src: string, filename: string, options: Options): string {
   return prettier.format(src, {
     filepath: filename,
     apexStandaloneParser: "built-in",
@@ -23,7 +19,7 @@ function prettyPrint(
   });
 }
 
-function parse(string: string, opts: prettier.Options): any {
+function parse(string: string, opts: Options): any {
   // eslint-disable-next-line no-underscore-dangle
   return prettier.__debug.parse(
     string,
@@ -40,7 +36,7 @@ function parse(string: string, opts: prettier.Options): any {
 function runSpec(
   dirname: string,
   parsers: string[],
-  specOptions?: prettier.Options,
+  specOptions?: Options & { astCompareDisabled?: boolean },
 ): void {
   /* instabul ignore if */
   if (!parsers || !parsers.length) {
@@ -57,7 +53,7 @@ function runSpec(
     ) {
       const source = read(path).replace(/\r\n/g, "\n");
 
-      let options: prettier.Options[] = [];
+      let options: Options[] = [];
       if (specOptions !== undefined) {
         if (!Array.isArray(specOptions)) {
           options = [specOptions];
@@ -67,7 +63,7 @@ function runSpec(
       } else {
         options.push({});
       }
-      const mergedOptions = options.map((opts: prettier.Options) => ({
+      const mergedOptions = options.map((opts: Options) => ({
         plugins: ["."],
         ...opts,
         parser: parsers[0],
@@ -81,7 +77,8 @@ function runSpec(
           );
         });
 
-        if (AST_COMPARE) {
+        // Some of the tests can not pass the AST Compare just because they may fix keywords casing or another valid reason
+        if (AST_COMPARE && !specOptions?.astCompareDisabled) {
           const ast = parse(source, mergedOpts);
           const ppast = parse(output, mergedOpts);
           const secondOutput = prettyPrint(output, path, mergedOpts);
