@@ -3,7 +3,7 @@
 [![Build Status](https://img.shields.io/github/workflow/status/IlyaMatsuev/prettier-plugin-apex/Tests%20and%20Deployments.svg?label=Build%20Status)](https://github.com/IlyaMatsuev/prettier-plugin-apex/actions/workflows/tests-deployments.yml)
 [![npm](https://img.shields.io/npm/v/@ilyamatsuev/prettier-plugin-apex.svg)](https://www.npmjs.com/package/@ilyamatsuev/prettier-plugin-apex)
 ![license](https://img.shields.io/npm/l/prettier-plugin-apex.svg)
-[![codecov](https://codecov.io/gh/dangmai/prettier-plugin-apex/branch/master/graph/badge.svg)](https://codecov.io/gh/dangmai/prettier-plugin-apex)
+[![codecov](https://codecov.io/gh/IlyaMatsuev/prettier-plugin-apex/branch/master/graph/badge.svg?token=AAD15HSIB9)](https://codecov.io/gh/IlyaMatsuev/prettier-plugin-apex)
 
 ![Prettier Banner](https://raw.githubusercontent.com/prettier/prettier-logo/master/images/prettier-banner-light.png)
 
