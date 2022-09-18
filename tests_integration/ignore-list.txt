@@ -7,3 +7,4 @@
 # This file gives a debug-check error when tested because of the comment in the middle of the condition.
 # The initial AST path has changed because of that. However, the prettier output is still perfectly fine and preferable
 ../NPSP/force-app/main/default/classes/RD2_OpportunityMatcher.cls
+../NPSP/unpackaged
