@@ -97,7 +97,7 @@ function sortModifiers(modifiers: Doc[], options: ParserOptions): Doc[] {
   let nonAnnotationModifiers = modifiers.filter(
     (m) => !Array.isArray(m) || m[0] !== "@",
   );
-  if (options.apexSortModifiers) {
+  if (options.apexSortModifiers && nonAnnotationModifiers.length) {
     nonAnnotationModifiers = [
       nonAnnotationModifiers
         .flat()
@@ -127,6 +127,7 @@ function handleDefaultAccessModifier(
 ): Doc[] {
   if (
     options.apexExplicitAccessModifier &&
+    options.parser === "apex" &&
     !hasAccessModifiers(modifiers, ACCESS_MODIFIERS)
   ) {
     modifiers.unshift([DEFAULT_ACCESS_MODIFIER, " "]);
@@ -542,17 +543,13 @@ function handleAnonymousBlockUnit(path: AstPath, print: printFn): Doc {
     .filter((member: Doc) => member);
 
   const memberDocs: Doc[] = memberParts.map(
-    (memberDoc: Doc, index: number, allMemberDocs: Doc[]) => {
-      if (index !== allMemberDocs.length - 1) {
-        return concat([memberDoc, hardline]);
-      }
-      return memberDoc;
-    },
+    (memberDoc: Doc, i: number, allMemberDocs: Doc[]) =>
+      i === allMemberDocs.length - 1 ? memberDoc : [memberDoc, hardline],
   );
   if (memberDocs.length > 0) {
     parts.push(...memberDocs);
   }
-  return concat(parts);
+  return parts;
 }
 
 function handleTriggerDeclarationUnit(

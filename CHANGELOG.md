@@ -1,3 +1,9 @@
+# Unreleased
+
+## Formatting Changes
+
+- Fix an issue with the `apexExplicitAccessModifier` option. Now it won't work for the anonymous Apex files.
+
 # 2.0.0
 
 ## Dependency Changes
@@ -12,7 +18,7 @@
 
 - Add ability to specify `host` and `port` options for built-in parsing server ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/476)).
 
-## Formatting Changes (Fork)
+## Formatting Changes
 
 - Add option to format inline comments (`apexFormatInlineComments`)
 - Add option to format annotation names to always be upper camel case (`apexFormatAnnotations`)
