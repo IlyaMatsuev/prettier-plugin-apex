@@ -1,3 +1,10 @@
+# 2.0.3
+
+## Formatting Changes
+
+- Fix an issue with the `apexExplicitAccessModifier` option. Now it won't work for the anonymous Apex files.
+- Add support for SOQL Geolocation Expression ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/674)).
+
 # 2.0.0
 
 ## Dependency Changes
@@ -12,18 +19,6 @@
 
 - Add ability to specify `host` and `port` options for built-in parsing server ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/476)).
 
-## Formatting Changes (Fork)
-
-- Add option to format inline comments (`apexFormatInlineComments`)
-- Add option to format annotation names to always be upper camel case (`apexFormatAnnotations`)
-- Add option to add spaces between annotation arguments keys and values (`apexAnnotationsArgsSpacing`)
-- Add option to make closing bracket remain on the same line if the block is empty (`apexEmptyBlockBracketLine`)
-- Add additional space before the opening bracket for the collections initialization: `new Map<> {`
-- Add option to format standard Apex types references (`apexFormatStandardTypes`)
-- Add option to format properties so that if getter or setter has only one statement they are aligned in one line (`apexExpandOneLineProperties`)
-- Add option to explicitly put the `private` keyword if the access modifier was not provided (`apexExplicitAccessModifier`)
-- Add option to place class member modifiers in the specific order. For fields: `<access> static final transient`, for methods: `<access> static/override virtual/abstract` (`apexSortModifiers`)
-
 ## Formatting Changes
 
 - Fix SOQL Time literals always getting printed in UTC timezone.
@@ -34,6 +29,8 @@
 - Use user input to improve line break heuristics in short SOQL/SOSL queries ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/511)).
 - Fix unstable leading comments before Block Statement.
 - Support trailing `prettier-ignore` comments ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/567)).
+- Fix failure to call `apex-ast-serializer` because of excessively long CLASSPATH on Windows ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/645)).
+- Fix unstable end of line comments in binaryish expressions.
 
 # 1.10.0
 

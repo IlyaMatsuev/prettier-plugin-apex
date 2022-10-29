@@ -97,7 +97,7 @@ function sortModifiers(modifiers: Doc[], options: ParserOptions): Doc[] {
   let nonAnnotationModifiers = modifiers.filter(
     (m) => !Array.isArray(m) || m[0] !== "@",
   );
-  if (options.apexSortModifiers) {
+  if (options.apexSortModifiers && nonAnnotationModifiers.length) {
     nonAnnotationModifiers = [
       nonAnnotationModifiers
         .flat()
@@ -127,6 +127,7 @@ function handleDefaultAccessModifier(
 ): Doc[] {
   if (
     options.apexExplicitAccessModifier &&
+    options.parser === "apex" &&
     !hasAccessModifiers(modifiers, ACCESS_MODIFIERS)
   ) {
     modifiers.unshift([DEFAULT_ACCESS_MODIFIER, " "]);
@@ -279,7 +280,23 @@ function handleBinaryishExpression(path: AstPath, print: printFn): Doc {
   //  .c() > d
   docs.push(group(leftDoc));
   docs.push(" ");
-  docs.push(groupConcat([operationDoc, line, rightDoc]));
+
+  // If the left child of a binaryish expression has an end of line comment,
+  // we want to make sure that comment is printed with the left child and
+  // followed by a hardline. Otherwise, it will lead to unstable comments in
+  // certain situation, because the EOL comment might become attached to the
+  // entire binaryish expression after the first format.
+  const leftChildHasEndOfLineComment =
+    node.left.comments?.filter(
+      (comment: AnnotatedComment) =>
+        comment.trailing && comment.placement === "endOfLine",
+    ).length > 0;
+
+  if (leftChildHasEndOfLineComment) {
+    docs.push(groupConcat([operationDoc, hardline, rightDoc]));
+  } else {
+    docs.push(groupConcat([operationDoc, line, rightDoc]));
+  }
   return groupConcat(docs);
 }
 
@@ -542,17 +559,13 @@ function handleAnonymousBlockUnit(path: AstPath, print: printFn): Doc {
     .filter((member: Doc) => member);
 
   const memberDocs: Doc[] = memberParts.map(
-    (memberDoc: Doc, index: number, allMemberDocs: Doc[]) => {
-      if (index !== allMemberDocs.length - 1) {
-        return concat([memberDoc, hardline]);
-      }
-      return memberDoc;
-    },
+    (memberDoc: Doc, i: number, allMemberDocs: Doc[]) =>
+      i === allMemberDocs.length - 1 ? memberDoc : [memberDoc, hardline],
   );
   if (memberDocs.length > 0) {
     parts.push(...memberDocs);
   }
-  return concat(parts);
+  return parts;
 }
 
 function handleTriggerDeclarationUnit(
@@ -3199,6 +3212,7 @@ nodeHandler[APEX_TYPES.WHERE_DISTANCE_EXPRESSION] =
 nodeHandler[APEX_TYPES.DISTANCE_FUNCTION_EXPRESSION] =
   handleDistanceFunctionExpression;
 nodeHandler[APEX_TYPES.GEOLOCATION_LITERAL] = handleGeolocationLiteral;
+nodeHandler[APEX_TYPES.GEOLOCATION_EXPRESSION] = handlePassthroughCall("expr");
 nodeHandler[APEX_TYPES.NUMBER_LITERAL] = handlePassthroughCall("number", "$");
 nodeHandler[APEX_TYPES.NUMBER_EXPRESSION] = handlePassthroughCall("expr");
 nodeHandler[APEX_TYPES.QUERY_LITERAL_EXPRESSION] =
