@@ -7,6 +7,7 @@ on:
     - cron: "0 8 * * *"
   repository_dispatch:
     types: manual-test-run
+  workflow_dispatch:
 
 jobs:
   functional-tests:
@@ -15,22 +16,22 @@ jobs:
       fail-fast: false
       matrix:
         node:
+          - "19"
           - "18"
-          - "17"
           - "16"
           - "14"
         java:
           - "17"
           - "11"
         include:
-          - node: "16"
+          - node: "18"
             java: "11"
             ENABLE_CODE_COVERAGE: true
             ENABLE_INTEGRATION_TESTS: true
             ENABLE_DEPLOYMENT: false
     env:
       ENABLE_CODE_COVERAGE: ${{ matrix.ENABLE_CODE_COVERAGE }}
-      RUN_INTEGRATION_TESTS: ${{ matrix.ENABLE_INTEGRATION_TESTS && (github.event_name == 'schedule' || github.event_name == 'repository_dispatch' || startsWith(github.ref, 'refs/tags')) }}
+      RUN_INTEGRATION_TESTS: ${{ matrix.ENABLE_INTEGRATION_TESTS && (github.event_name == 'schedule' || github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags')) }}
       RUN_DEPLOYMENT: ${{ matrix.ENABLE_DEPLOYMENT && startsWith(github.ref, 'refs/tags') }}
     name: Run tests on NodeJS ${{ matrix.node }} and Java ${{ matrix.java }}
 
@@ -39,7 +40,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3.4.1
+        uses: actions/setup-node@v3.5.1
         with:
           node-version: ${{ matrix.node }}
 
