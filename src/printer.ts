@@ -29,6 +29,7 @@ import {
   QUERY,
   QUERY_WHERE,
   ACCESS_MODIFIERS,
+  ACCESS_EXCEPTION_MODIFIERS,
   DEFAULT_ACCESS_MODIFIER,
   MODIFIERS_PRIORITY,
 } from "./constants";
@@ -128,7 +129,10 @@ function handleDefaultAccessModifier(
   if (
     options.apexExplicitAccessModifier &&
     options.parser === "apex" &&
-    !hasAccessModifiers(modifiers, ACCESS_MODIFIERS)
+    !hasAccessModifiers(modifiers, [
+      ...ACCESS_MODIFIERS,
+      ...ACCESS_EXCEPTION_MODIFIERS,
+    ])
   ) {
     modifiers.unshift([DEFAULT_ACCESS_MODIFIER, " "]);
   }

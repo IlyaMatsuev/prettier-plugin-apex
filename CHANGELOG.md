@@ -1,6 +1,8 @@
 # Unreleased
 
+- Fix an issue with the `apexExplicitAccessModifier` option when the `webservice` method gets an access modifier ([issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/12)).
 - Fix an issue with the `apexExplicitAccessModifier` option when the method parameters get `private` modifier ([issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/11)).
+- Change the formatting of `webservice` and `testmethod` modifiers to be always printed in lowercase instead of `webService` and `testMethod`.
 
 # 2.0.3
 
