@@ -1,3 +1,7 @@
+# Unreleased
+
+- Fix an issue with the `apexExplicitAccessModifier` option when the method parameters get `private` modifier ([issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/11)).
+
 # 2.0.3
 
 ## Formatting Changes

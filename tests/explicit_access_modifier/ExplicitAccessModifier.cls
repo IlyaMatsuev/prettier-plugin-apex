@@ -111,6 +111,12 @@ with sharing virtual   public @IsTest class ExplicitAccessModifier
         public enum Season {WINTER, SPRING, SUMMER, FALL}
         enum Month {JANUARY}
 
+        public EnumTest(final String param) {
+        }
+
+        public EnumTest(String param, final Integer param2) {
+        }
+
         @TestVisible
         private enum AccountTypeOne {
             BUSINESS_ACCOUNT,
@@ -132,7 +138,7 @@ with sharing virtual   public @IsTest class ExplicitAccessModifier
             PERSON_ACCOUNT
         }
 
-        void enumTest() {
+        void enumTest(final String param) {
             final Integer i = Season.WINTER.ordinal();
             String s = Season.SPRING.name();
             final Season[] values = Season.values();
