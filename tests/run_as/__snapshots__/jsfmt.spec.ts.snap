@@ -36,7 +36,7 @@ class RunAsClass {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 @isTest
 class RunAsClass {
-  static testMethod void runAsTest() {
+  static testmethod void runAsTest() {
     User userOne = [SELECT Id FROM User LIMIT 1];
     User userTwo = [SELECT Id FROM User LIMIT 1 OFFSET 1];
 

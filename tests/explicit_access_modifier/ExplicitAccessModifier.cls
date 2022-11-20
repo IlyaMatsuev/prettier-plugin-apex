@@ -94,6 +94,9 @@ with sharing virtual   public @IsTest class ExplicitAccessModifier
         }
 
         override protected void methodTwo() {}
+
+        static webService void methodThree() {
+        }
     }
 
     interface InterfaceTest {

@@ -1,3 +1,7 @@
+# Unreleased
+
+- Change the formatting of `webservice` and `testmethod` modifiers to be always printed in lowercase instead of `webService` and `testMethod`.
+
 # 2.0.3
 
 ## Formatting Changes
