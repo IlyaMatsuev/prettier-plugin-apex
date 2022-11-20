@@ -1022,22 +1022,10 @@ function handleMethodDeclaration(
   return concat(parts);
 }
 
-function handleModifierParameterRef(
-  path: AstPath,
-  print: printFn,
-  options: ParserOptions,
-): Doc {
+function handleModifierParameterRef(path: AstPath, print: printFn): Doc {
   const parts: Doc[] = [];
   // Modifiers
-  parts.push(
-    join(
-      "",
-      sortModifiers(
-        handleDefaultAccessModifier(path.map(print, "modifiers"), options),
-        options,
-      ),
-    ),
-  );
+  parts.push(...path.map(print, "modifiers"));
   // Type
   parts.push(path.call(print, "typeRef"));
   parts.push(" ");
