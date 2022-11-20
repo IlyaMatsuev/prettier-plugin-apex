@@ -447,8 +447,11 @@ export const DEFAULT_ACCESS_MODIFIER = "private";
 
 export const ACCESS_MODIFIERS = ["private", "protected", "public", "global"];
 
+export const ACCESS_EXCEPTION_MODIFIERS = ["webservice"];
+
 export const MODIFIERS_PRIORITY = [
   ...ACCESS_MODIFIERS,
+  ...ACCESS_EXCEPTION_MODIFIERS,
   "static",
   "final",
   "transient",

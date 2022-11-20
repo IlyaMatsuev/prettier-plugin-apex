@@ -240,7 +240,7 @@ public with sharing virtual class ExplicitAccessModifier {
     protected override void methodTwo() {
     }
 
-    private static webservice void methodThree() {
+    webservice static void methodThree() {
     }
   }
 
