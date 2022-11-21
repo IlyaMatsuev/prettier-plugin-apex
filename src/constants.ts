@@ -452,6 +452,7 @@ export const ACCESS_EXCEPTION_MODIFIERS = ["webservice"];
 export const MODIFIERS_PRIORITY = [
   ...ACCESS_MODIFIERS,
   ...ACCESS_EXCEPTION_MODIFIERS,
+  "testmethod",
   "static",
   "final",
   "transient",

@@ -24,4 +24,28 @@ class topLevelClass {
 
   @InvocableVariable(label='Records for Input' description='yourDescription' required=true)
   public List<SObject> inputCollection;
+
+  static testmethod void someTest() {
+
+  }
+
+  @SuppressWarnings('PMD')
+  static testmethod void someTest() {
+
+  }
+
+  @istest
+  public static testmethod void someTest() {
+    
+  }
+
+  @istest(SeeAllData=true)
+  static testmethod void someTest() {
+    
+  }
+
+  @istest(SeeAllData=true)
+  static void someTest() {
+    
+  }
 }

@@ -85,15 +85,20 @@ function pushIfExist(
 function hasModifiers(modifiers: Doc[], search: Doc[]): boolean {
   return !!findInDoc(
     modifiers,
-    (d) => (search.some((a) => d === a) ? d : undefined),
+    (d) =>
+      search.some((a) => {
+        if (typeof d === "string" && typeof a === "string") {
+          return d.toLowerCase() === a.toLowerCase();
+        }
+        return d === a;
+      })
+        ? d
+        : undefined,
     undefined,
   );
 }
 
-function handleModifiersOptions(
-  modifiers: Doc[],
-  options: ParserOptions,
-): Doc[] {
+function normalizeModifiers(modifiers: Doc[], options: ParserOptions): Doc[] {
   // For annotation there is always "@" at the beginning of the Doc
   const annotationModifiers = modifiers.filter(
     (m) => Array.isArray(m) && m[0] === "@",
@@ -144,6 +149,25 @@ function handleModifiersOptions(
       " ",
     ];
   }
+
+  // if (hasModifiers(nonAnnotationModifiers, ["testmethod"])) {
+  //   nonAnnotationModifiers = nonAnnotationModifiers.filter(
+  //     (m) => m !== "testmethod",
+  //   );
+
+  //   if (
+  //     !annotationModifiers.length ||
+  //     !hasModifiers(annotationModifiers, ["IsTest"])
+  //   ) {
+  //     annotationModifiers.unshift(["@IsTest", hardline]);
+  //   }
+  // }
+
+  // Check if there are any modifiers again because `testmethod` could be deleted
+  if (nonAnnotationModifiers.length) {
+    nonAnnotationModifiers = [nonAnnotationModifiers.join(" "), " "];
+  }
+
   // Put annotations first
   return [...annotationModifiers, ...nonAnnotationModifiers];
 }
@@ -667,7 +691,7 @@ function handleInterfaceDeclaration(
   const node = path.getValue();
 
   const superInterface: Doc = path.call(print, "superInterface", "value");
-  const modifierDocs: Doc[] = handleModifiersOptions(
+  const modifierDocs: Doc[] = normalizeModifiers(
     path.map(print, "modifiers"),
     options,
   );
@@ -733,7 +757,7 @@ function handleClassDeclaration(
 ): Doc {
   const node = path.getValue();
   const superClass: Doc = path.call(print, "superClass", "value");
-  const modifierDocs: Doc[] = handleModifiersOptions(
+  const modifierDocs: Doc[] = normalizeModifiers(
     path.map(print, "modifiers"),
     options,
   );
@@ -950,7 +974,7 @@ function handlePropertyDeclaration(
   print: printFn,
   options: ParserOptions,
 ): Doc {
-  const modifierDocs: Doc[] = handleModifiersOptions(
+  const modifierDocs: Doc[] = normalizeModifiers(
     path.map(print, "modifiers"),
     options,
   );
@@ -1018,12 +1042,9 @@ function handleMethodDeclaration(
   const parameterParts = [];
   // Modifiers
   if (statementDoc || hasModifiers(modifierDocs, ["abstract"])) {
-    // There is no statement doc if this is an interface method or abstract method
+    // There is no statement if this is an interface method or abstract method
     // But for abstract methods it's possible to have access modifier
-    modifierDocs = handleModifiersOptions(
-      path.map(print, "modifiers"),
-      options,
-    );
+    modifierDocs = normalizeModifiers(modifierDocs, options);
   }
   if (modifierDocs.length > 0) {
     parts.push(modifierDocs);
@@ -1127,7 +1148,7 @@ function handleEnumDeclaration(
   print: printFn,
   options: ParserOptions,
 ): Doc {
-  const modifierDocs: Doc[] = handleModifiersOptions(
+  const modifierDocs: Doc[] = normalizeModifiers(
     path.map(print, "modifiers"),
     options,
   );
@@ -1362,10 +1383,7 @@ function handleVariableDeclarations(
   // Modifiers
   if (path.getParentNode()["@class"] === APEX_TYPES.FIELD_MEMBER) {
     // Add private access modifier if this is a class field
-    modifierDocs = handleModifiersOptions(
-      path.map(print, "modifiers"),
-      options,
-    );
+    modifierDocs = normalizeModifiers(path.map(print, "modifiers"), options);
   }
   parts.push(join("", modifierDocs));
 
