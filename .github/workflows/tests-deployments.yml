@@ -29,9 +29,13 @@ jobs:
             ENABLE_CODE_COVERAGE: true
             ENABLE_INTEGRATION_TESTS: true
             ENABLE_DEPLOYMENT: false
+          - node: "18"
+            java: "17"
+            ENABLE_PACKAGE_TESTS: true
     env:
       ENABLE_CODE_COVERAGE: ${{ matrix.ENABLE_CODE_COVERAGE }}
       RUN_INTEGRATION_TESTS: ${{ matrix.ENABLE_INTEGRATION_TESTS && (github.event_name == 'schedule' || github.event_name == 'repository_dispatch' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags')) }}
+      RUN_PACKAGE_TESTS: ${{ matrix.ENABLE_PACKAGE_TESTS && (github.event_name == 'schedule' || github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch') }}
       RUN_DEPLOYMENT: ${{ matrix.ENABLE_DEPLOYMENT && startsWith(github.ref, 'refs/tags') }}
     name: Run tests on NodeJS ${{ matrix.node }} and Java ${{ matrix.java }}
 
@@ -56,17 +60,17 @@ jobs:
       - name: Remove ipv6 loopback
         run: sudo sed -Ei '/(^::1)/d' /etc/hosts
 
-      - name: Install NPM dependencies
-        run: npm ci
+      - name: Install dependencies
+        run: yarn install
 
       - name: Run Apex parsing server
-        run: nohup npm run start-server &
+        run: nohup yarn run start-server &
 
       - name: Wait for Apex parsing server to be up
-        run: npm run wait-server
+        run: yarn run wait-server
 
       - name: Run functional tests
-        run: AST_COMPARE=true npm test -- -c jest.config.standalone.js
+        run: AST_COMPARE=true yarn test -c jest.config.standalone.js
 
       - name: Upload code coverage
         if: env.ENABLE_CODE_COVERAGE
@@ -78,7 +82,11 @@ jobs:
 
       - name: Run integration tests
         if: env.RUN_INTEGRATION_TESTS == 'true'
-        run: ./tests_integration/run-integration-tests.sh
+        run: ./tests_integration/format/run-integration-tests.sh
+
+      - name: Run package tests
+        if: env.RUN_PACKAGE_TESTS == 'true'
+        run: ./tests_integration/package/run-package-tests.sh
 
       - name: Deploy to NPM
         if: env.RUN_DEPLOYMENT == 'true'
@@ -97,4 +105,10 @@ jobs:
 
       - name: Stop Apex parsing server
         if: ${{ always() }}
-        run: npm run stop-server
+        run: yarn run stop-server
+        env:
+          # Workaround for this bug from npm-publish Github Action:
+          # https://github.com/JS-DevTools/npm-publish/issues/15
+          # That Action leaves some placeholder (INPUT_TOKEN) in the .npmrc file
+          # which needs to filled in by _something_, otherwise `yarn` fails
+          INPUT_TOKEN: ""

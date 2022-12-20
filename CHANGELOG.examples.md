@@ -1,3 +1,29 @@
+# Unreleased
+
+## Formatting Changes
+
+### Convert `webservice` and `testmethod` modifier to lowecase
+
+Was:
+
+```java
+public TestMethod static someTestMethod() {
+}
+
+webService static someWebservice() {
+}
+```
+
+Now:
+
+```java
+public testmethod static someTestMethod() {
+}
+
+webservice static someWebservice() {
+}
+```
+
 # 2.0.0
 
 ## Formatting Changes
