@@ -147,4 +147,29 @@ with sharing virtual   public @IsTest class ExplicitAccessModifier
             final Season[] values = Season.values();
         }
     }
+
+    @isTest(seeAllData = true)
+    // Dangling comment
+    static void trailingCommentAfterMethodName() {
+        System.debug('Hi');
+    }
+
+    @isTest(seeAllData = true)
+    /* Dangling comment */
+    static void trailingCommentAfterMethodName() {
+        System.debug('Hi');
+    }
+
+    @isTest(seeAllData = true)
+    /* 
+      Dangling comment
+    */
+    static void trailingCommentAfterMethodName() {
+        System.debug('Hi');
+    }
+
+    @isTest // Decorator Trailing Inline Comment 1
+    public static void trailingCommentAfterMethodName() {
+        System.debug('Hi');
+    }
 }

@@ -82,7 +82,7 @@ function pushIfExist(
   return parts;
 }
 
-function hasAccessModifiers(modifiers: Doc[], search: Doc[]): boolean {
+function hasModifiers(modifiers: Doc[], search: Doc[]): boolean {
   return !!findInDoc(
     modifiers,
     (d) => (search.some((a) => d === a) ? d : undefined),
@@ -90,7 +90,10 @@ function hasAccessModifiers(modifiers: Doc[], search: Doc[]): boolean {
   );
 }
 
-function sortModifiers(modifiers: Doc[], options: ParserOptions): Doc[] {
+function handleModifiersOptions(
+  modifiers: Doc[],
+  options: ParserOptions,
+): Doc[] {
   // For annotation there is always "@" at the beginning of the Doc
   const annotationModifiers = modifiers.filter(
     (m) => Array.isArray(m) && m[0] === "@",
@@ -98,10 +101,33 @@ function sortModifiers(modifiers: Doc[], options: ParserOptions): Doc[] {
   let nonAnnotationModifiers = modifiers.filter(
     (m) => !Array.isArray(m) || m[0] !== "@",
   );
+
+  if (
+    options.apexExplicitAccessModifier &&
+    options.parser === "apex" &&
+    !hasModifiers(modifiers, [
+      ...ACCESS_MODIFIERS,
+      ...ACCESS_EXCEPTION_MODIFIERS,
+    ])
+  ) {
+    nonAnnotationModifiers.unshift([DEFAULT_ACCESS_MODIFIER, " "]);
+  }
+
   if (options.apexSortModifiers && nonAnnotationModifiers.length) {
+    const danglingComments = modifiers
+      .flat(2)
+      .filter(
+        (m) =>
+          Array.isArray(m) &&
+          m.length &&
+          typeof m[0] === "string" &&
+          (m[0].startsWith("//") ||
+            (m[0].startsWith("/*") && m[0].endsWith("*/"))),
+      );
     nonAnnotationModifiers = [
+      ...danglingComments,
       nonAnnotationModifiers
-        .flat()
+        .flat(2)
         .filter((m) => typeof m === "string" && m.trim())
         .sort((a, b) => {
           const aPriority = MODIFIERS_PRIORITY.indexOf(a as string);
@@ -120,23 +146,6 @@ function sortModifiers(modifiers: Doc[], options: ParserOptions): Doc[] {
   }
   // Put annotations first
   return [...annotationModifiers, ...nonAnnotationModifiers];
-}
-
-function handleDefaultAccessModifier(
-  modifiers: Doc[],
-  options: ParserOptions,
-): Doc[] {
-  if (
-    options.apexExplicitAccessModifier &&
-    options.parser === "apex" &&
-    !hasAccessModifiers(modifiers, [
-      ...ACCESS_MODIFIERS,
-      ...ACCESS_EXCEPTION_MODIFIERS,
-    ])
-  ) {
-    modifiers.unshift([DEFAULT_ACCESS_MODIFIER, " "]);
-  }
-  return modifiers;
 }
 
 function isOneLineStatement(textStatement: string): boolean {
@@ -658,8 +667,8 @@ function handleInterfaceDeclaration(
   const node = path.getValue();
 
   const superInterface: Doc = path.call(print, "superInterface", "value");
-  const modifierDocs: Doc[] = sortModifiers(
-    handleDefaultAccessModifier(path.map(print, "modifiers"), options),
+  const modifierDocs: Doc[] = handleModifiersOptions(
+    path.map(print, "modifiers"),
     options,
   );
   const memberParts = path
@@ -724,8 +733,8 @@ function handleClassDeclaration(
 ): Doc {
   const node = path.getValue();
   const superClass: Doc = path.call(print, "superClass", "value");
-  const modifierDocs: Doc[] = sortModifiers(
-    handleDefaultAccessModifier(path.map(print, "modifiers"), options),
+  const modifierDocs: Doc[] = handleModifiersOptions(
+    path.map(print, "modifiers"),
     options,
   );
   const memberParts = path
@@ -941,8 +950,8 @@ function handlePropertyDeclaration(
   print: printFn,
   options: ParserOptions,
 ): Doc {
-  const modifierDocs: Doc[] = sortModifiers(
-    handleDefaultAccessModifier(path.map(print, "modifiers"), options),
+  const modifierDocs: Doc[] = handleModifiersOptions(
+    path.map(print, "modifiers"),
     options,
   );
   const getterDoc: Doc = path.call(print, "getter", "value");
@@ -1008,11 +1017,11 @@ function handleMethodDeclaration(
   const parts: Doc[] = [];
   const parameterParts = [];
   // Modifiers
-  if (statementDoc || hasAccessModifiers(modifierDocs, ["abstract"])) {
-    // There is no statement if this is an interface method or abstract method
+  if (statementDoc || hasModifiers(modifierDocs, ["abstract"])) {
+    // There is no statement doc if this is an interface method or abstract method
     // But for abstract methods it's possible to have access modifier
-    modifierDocs = sortModifiers(
-      handleDefaultAccessModifier(modifierDocs, options),
+    modifierDocs = handleModifiersOptions(
+      path.map(print, "modifiers"),
       options,
     );
   }
@@ -1118,8 +1127,8 @@ function handleEnumDeclaration(
   print: printFn,
   options: ParserOptions,
 ): Doc {
-  const modifierDocs: Doc[] = sortModifiers(
-    handleDefaultAccessModifier(path.map(print, "modifiers"), options),
+  const modifierDocs: Doc[] = handleModifiersOptions(
+    path.map(print, "modifiers"),
     options,
   );
   const memberDocs: Doc[] = path.map(print, "members");
@@ -1353,8 +1362,8 @@ function handleVariableDeclarations(
   // Modifiers
   if (path.getParentNode()["@class"] === APEX_TYPES.FIELD_MEMBER) {
     // Add private access modifier if this is a class field
-    modifierDocs = sortModifiers(
-      handleDefaultAccessModifier(modifierDocs, options),
+    modifierDocs = handleModifiersOptions(
+      path.map(print, "modifiers"),
       options,
     );
   }
