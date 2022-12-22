@@ -807,8 +807,36 @@ class Comments {
     while (true);
   }
 
+  // Some comment here
+  @isTest(seeAllData = true)
+  // Dangling comment
+  public static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  @isTest(seeAllData = true)
+  /* Dangling comment */
+  public static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  @isTest(seeAllData = true)
+  /* 
+    Dangling comment 
+  */
+  // Comment
+  public static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
   @isTest // Decorator Trailing Inline Comment 1
-  void trailingCommentAfterMethodName() {
+  static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  // Some comment here
+  @isTest // Decorator Trailing Inline Comment 1
+  static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
@@ -819,17 +847,17 @@ class Comments {
 
   @isTest // Decorator Trailing Inline Comment 2
   @AuraEnabled // Decorater Trailing Inline Comment 3
-  void trailingCommentAfterMethodName() {
+  static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
   @isTest /* Decorator Trailing Block Comment 1 */
-  void trailingCommentAfterMethodName() {
+  static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
   /* Decorator Leading Block Comment 1 */ @isTest
-  void trailingCommentAfterMethodName() {
+  static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
