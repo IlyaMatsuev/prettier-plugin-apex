@@ -31,6 +31,8 @@ import {
   ACCESS_EXCEPTION_MODIFIERS,
   DEFAULT_ACCESS_MODIFIER,
   MODIFIERS_PRIORITY,
+  TESTMETHOD_MODIFIER,
+  ABSTRACT_MODIFIER,
 } from "./constants";
 import jorje from "../vendor/apex-ast-serializer/typings/jorje";
 import Concat = builders.Concat;
@@ -82,7 +84,7 @@ function pushIfExist(
   return parts;
 }
 
-function hasModifiers(modifiers: Doc[], search: Doc[]): boolean {
+function hasModifiers(modifiers: Doc[], ...search: Doc[]): boolean {
   return !!findInDoc(
     modifiers,
     (d) =>
@@ -103,21 +105,36 @@ function normalizeModifiers(modifiers: Doc[], options: ParserOptions): Doc[] {
   const annotationModifiers = modifiers.filter(
     (m) => Array.isArray(m) && m[0] === "@",
   );
-  let nonAnnotationModifiers = modifiers.filter(
-    (m) => !Array.isArray(m) || m[0] !== "@",
-  );
+  let nonAnnotationModifiers = modifiers
+    .filter((m) => !Array.isArray(m) || m[0] !== "@")
+    .flat(2);
 
+  // Replace "testmethod" modifier with the "@IsTest" annotation
+  if (hasModifiers(nonAnnotationModifiers, TESTMETHOD_MODIFIER)) {
+    // Delete testmethod modifier and the space after it
+    nonAnnotationModifiers.splice(
+      nonAnnotationModifiers.indexOf(TESTMETHOD_MODIFIER),
+      2,
+    );
+    if (!hasModifiers(annotationModifiers, "istest")) {
+      annotationModifiers.unshift(["@IsTest", hardline]);
+    }
+  }
+
+  // Add default modifier (private) if the option is enabled
   if (
     options.apexExplicitAccessModifier &&
     options.parser === "apex" &&
-    !hasModifiers(modifiers, [
+    !hasModifiers(
+      nonAnnotationModifiers,
       ...ACCESS_MODIFIERS,
       ...ACCESS_EXCEPTION_MODIFIERS,
-    ])
+    )
   ) {
-    nonAnnotationModifiers.unshift([DEFAULT_ACCESS_MODIFIER, " "]);
+    nonAnnotationModifiers.unshift(DEFAULT_ACCESS_MODIFIER, " ");
   }
 
+  // Sort modifiers if the option is enabled
   if (options.apexSortModifiers && nonAnnotationModifiers.length) {
     const danglingComments = modifiers
       .flat(2)
@@ -132,7 +149,6 @@ function normalizeModifiers(modifiers: Doc[], options: ParserOptions): Doc[] {
     nonAnnotationModifiers = [
       ...danglingComments,
       nonAnnotationModifiers
-        .flat(2)
         .filter((m) => typeof m === "string" && m.trim())
         .sort((a, b) => {
           const aPriority = MODIFIERS_PRIORITY.indexOf(a as string);
@@ -148,24 +164,6 @@ function normalizeModifiers(modifiers: Doc[], options: ParserOptions): Doc[] {
         .join(" ") as Doc,
       " ",
     ];
-  }
-
-  // if (hasModifiers(nonAnnotationModifiers, ["testmethod"])) {
-  //   nonAnnotationModifiers = nonAnnotationModifiers.filter(
-  //     (m) => m !== "testmethod",
-  //   );
-
-  //   if (
-  //     !annotationModifiers.length ||
-  //     !hasModifiers(annotationModifiers, ["IsTest"])
-  //   ) {
-  //     annotationModifiers.unshift(["@IsTest", hardline]);
-  //   }
-  // }
-
-  // Check if there are any modifiers again because `testmethod` could be deleted
-  if (nonAnnotationModifiers.length) {
-    nonAnnotationModifiers = [nonAnnotationModifiers.join(" "), " "];
   }
 
   // Put annotations first
@@ -1041,7 +1039,7 @@ function handleMethodDeclaration(
   const parts: Doc[] = [];
   const parameterParts = [];
   // Modifiers
-  if (statementDoc || hasModifiers(modifierDocs, ["abstract"])) {
+  if (statementDoc || hasModifiers(modifierDocs, ABSTRACT_MODIFIER)) {
     // There is no statement if this is an interface method or abstract method
     // But for abstract methods it's possible to have access modifier
     modifierDocs = normalizeModifiers(modifierDocs, options);

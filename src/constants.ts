@@ -449,10 +449,13 @@ export const ACCESS_MODIFIERS = ["private", "protected", "public", "global"];
 
 export const ACCESS_EXCEPTION_MODIFIERS = ["webservice"];
 
+export const ABSTRACT_MODIFIER = "abstract";
+
+export const TESTMETHOD_MODIFIER = "testmethod";
+
 export const MODIFIERS_PRIORITY = [
   ...ACCESS_MODIFIERS,
   ...ACCESS_EXCEPTION_MODIFIERS,
-  "testmethod",
   "static",
   "final",
   "transient",
