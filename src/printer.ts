@@ -110,8 +110,11 @@ function normalizeModifiers(modifiers: Doc[], options: ParserOptions): Doc[] {
     .flat(2);
 
   // Replace "testmethod" modifier with the "@IsTest" annotation
-  if (hasModifiers(nonAnnotationModifiers, TESTMETHOD_MODIFIER)) {
-    // Delete testmethod modifier and the space after it
+  if (
+    options.apexFormatAnnotations &&
+    hasModifiers(nonAnnotationModifiers, TESTMETHOD_MODIFIER)
+  ) {
+    // Delete "testmethod" modifier and space after it
     nonAnnotationModifiers.splice(
       nonAnnotationModifiers.indexOf(TESTMETHOD_MODIFIER),
       2,

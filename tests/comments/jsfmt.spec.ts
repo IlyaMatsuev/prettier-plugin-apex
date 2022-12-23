@@ -1,1 +1,4 @@
-runSpec(__dirname, ["apex"], { astCompareDisabled: true });
+runSpec(__dirname, ["apex"], {
+  apexFormatAnnotations: true,
+  astCompareDisabled: true,
+});

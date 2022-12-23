@@ -904,7 +904,7 @@ class Comments {
 /**
  * ApexDoc for class
  */
-@isTest(
+@IsTest(
   seeAllData=true // Class annotation inline comment 1
   //isParallel = false // Class annotation inline comment 2
 )
@@ -1714,19 +1714,19 @@ class Comments {
   }
 
   // Some comment here
-  @isTest(seeAllData=true)
+  @IsTest(seeAllData=true)
   // Dangling comment
   public static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  @isTest(seeAllData=true)
+  @IsTest(seeAllData=true)
   /* Dangling comment */
   public static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  @isTest(seeAllData=true)
+  @IsTest(seeAllData=true)
   /* 
     Dangling comment 
   */
@@ -1735,61 +1735,61 @@ class Comments {
     System.debug('Hi');
   }
 
-  @isTest // Decorator Trailing Inline Comment 1
+  @IsTest // Decorator Trailing Inline Comment 1
   static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
   // Some comment here
-  @isTest // Decorator Trailing Inline Comment 1
+  @IsTest // Decorator Trailing Inline Comment 1
   static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  @isTest // Decorator Trailing Inline Comment 1
+  @IsTest // Decorator Trailing Inline Comment 1
   static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  @isTest // Decorator Trailing Inline Comment 1
+  @IsTest // Decorator Trailing Inline Comment 1
   static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  /* Decorator Leading Block Comment 1 */ @isTest
+  /* Decorator Leading Block Comment 1 */ @IsTest
   void leadingCommentBeforeAnnotation() {
     System.debug('Hi');
   }
 
-  @isTest // Decorator Trailing Inline Comment 2
+  @IsTest // Decorator Trailing Inline Comment 2
   @AuraEnabled // Decorater Trailing Inline Comment 3
   static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  @isTest /* Decorator Trailing Block Comment 1 */
+  @IsTest /* Decorator Trailing Block Comment 1 */
   static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  @isTest /* Decorator Trailing Block Comment 1 */
+  @IsTest /* Decorator Trailing Block Comment 1 */
   static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  /* Decorator Leading Block Comment 1 */ @isTest
+  /* Decorator Leading Block Comment 1 */ @IsTest
   static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  @isTest(
+  @IsTest(
     seeAllData=true // Method annotation inline comment 1
     //isParallel = false // Method annotation inline comment 2
   )
   void methodAnnotationInlineComment() {
   }
 
-  @isTest(
+  @IsTest(
     seeAllData=true /* Method annotation block comment 1 */
     /*isParallel = false // Method annotation block comment 2 */
   )
