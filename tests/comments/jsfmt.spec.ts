@@ -1,1 +1,1 @@
-runSpec(__dirname, ["apex"]);
+runSpec(__dirname, ["apex"], { astCompareDisabled: true });
