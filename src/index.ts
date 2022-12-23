@@ -129,7 +129,8 @@ export const options = {
     type: "boolean",
     category: CATEGORY_APEX,
     default: false,
-    description: "Format Apex annotations to the upper camel case.",
+    description:
+      "Format Apex annotations to the upper camel case. Also converts `testmethod` modifier to `@IsTest`",
   },
   apexFormatStandardTypes: {
     type: "boolean",

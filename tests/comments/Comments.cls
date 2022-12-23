@@ -840,6 +840,16 @@ class Comments {
     System.debug('Hi');
   }
 
+  @isTest // Decorator Trailing Inline Comment 1
+  static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  @isTest // Decorator Trailing Inline Comment 1
+  testmethod static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
   /* Decorator Leading Block Comment 1 */ @isTest
   void leadingCommentBeforeAnnotation() {
     System.debug('Hi');
@@ -856,6 +866,11 @@ class Comments {
     System.debug('Hi');
   }
 
+  @isTest /* Decorator Trailing Block Comment 1 */
+  static testmethod void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
   /* Decorator Leading Block Comment 1 */ @isTest
   static void trailingCommentAfterMethodName() {
     System.debug('Hi');
@@ -865,7 +880,7 @@ class Comments {
     seeAllData = true // Method annotation inline comment 1
     //isParallel = false // Method annotation inline comment 2
   )
-  void methodAnnotationInlineComment() {
+  testmethod void methodAnnotationInlineComment() {
   }
 
   @isTest(
