@@ -8,6 +8,7 @@
 ## Formatting Changes
 
 - Fix an issue with the `apexSortModifiers` option which removes a method modifier if there is an own-line comment between annotation and method ([issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/13)).
+- Fix an issue with the `apexExplicitAccessModifier` option when all trigger variables are treated as fields, adding non needed `private` keyword ([issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/20)).
 - Fix an issue with the `apexExplicitAccessModifier` option when the `webservice` method gets an access modifier ([issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/12)).
 - Fix an issue with the `apexExplicitAccessModifier` option when the method parameters get `private` modifier ([issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/11)).
 - Update the `apexFormatAnnotations` option to convert the `testmethod` method modifier to the `@IsTest` annotation ([issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/10)).
