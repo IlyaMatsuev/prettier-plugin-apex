@@ -65,6 +65,15 @@ export function isApexDocComment(comment: jorje.BlockComment): boolean {
   );
 }
 
+/**
+ * Check if the file is a trigger source by the provided file path
+ * @param filePath The absolute or relative file path
+ * @returns true if the source file is for Salesforce trigger
+ */
+export function isTriggerSource(filePath: string): boolean {
+  return filePath.endsWith(".trigger");
+}
+
 export function checkIfParentIsDottedExpression(path: AstPath): boolean {
   const node = path.getValue();
   const parentNode = path.getParentNode();

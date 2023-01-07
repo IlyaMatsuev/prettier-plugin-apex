@@ -10,6 +10,7 @@ import {
   checkIfParentIsDottedExpression,
   getPrecedence,
   isBinaryish,
+  isTriggerSource,
   normalizeAnnotationName,
   normalizeTypeName,
 } from "./util";
@@ -127,6 +128,7 @@ function normalizeModifiers(modifiers: Doc[], options: ParserOptions): Doc[] {
   // Add default modifier (private) if the option is enabled
   if (
     options.apexExplicitAccessModifier &&
+    !isTriggerSource(options.filepath) &&
     options.parser === "apex" &&
     !hasModifiers(
       nonAnnotationModifiers,
@@ -1384,7 +1386,7 @@ function handleVariableDeclarations(
   // Modifiers
   if (path.getParentNode()["@class"] === APEX_TYPES.FIELD_MEMBER) {
     // Add private access modifier if this is a class field
-    modifierDocs = normalizeModifiers(path.map(print, "modifiers"), options);
+    modifierDocs = normalizeModifiers(modifierDocs, options);
   }
   parts.push(join("", modifierDocs));
 
