@@ -1,15 +1,56 @@
+# 2.1.0
+
+## Internal Changes
+
+- `start-apex-server` takes optional `-c` flag, which will be passed on to `apex-ast-serializer` as a comma-delimited list of allowed origins that will be added to the CORS headers returned by the parsing server.
+- `start-apex-server` pipes internal logs to console, so that errors can be caught more quickly by users.
+
+## Formatting Changes
+
+- Fix an issue with the `apexSortModifiers` option which removes a method modifier if there is an own-line comment between annotation and method ([issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/13)).
+- Fix an issue with the `apexExplicitAccessModifier` option when all trigger variables are treated as fields, adding non needed `private` keyword ([issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/20)).
+- Fix an issue with the `apexExplicitAccessModifier` option when the `webservice` method gets an access modifier ([issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/12)).
+- Fix an issue with the `apexExplicitAccessModifier` option when the method parameters get `private` modifier ([issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/11)).
+- Update the `apexFormatAnnotations` option to convert the `testmethod` method modifier to the `@IsTest` annotation ([issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/10)).
+- Change the formatting of `webservice` and `testmethod` modifiers to be always printed in lowercase instead of `webService` and `testMethod`.
+
 # 2.0.3
 
 ## Formatting Changes
 
 - Fix an issue with the `apexExplicitAccessModifier` option. Now it won't work for the anonymous Apex files.
-- Add support for SOQL Geolocation Expression ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/674)).
 
 # 2.0.0
 
+## Formatting Changes
+
+- Add option to format inline comments (`apexFormatInlineComments`)
+- Add option to format annotation names to always be upper camel case (`apexFormatAnnotations`)
+- Add option to add spaces between annotation arguments keys and values (`apexAnnotationsArgsSpacing`)
+- Add option to make closing bracket remain on the same line if the block is empty (`apexEmptyBlockBracketLine`)
+- Add additional space before the opening bracket for the collections initialization: `new Map<> {`
+- Add option to format standard Apex types references (`apexFormatStandardTypes`)
+- Add option to format properties so that if getter or setter has only one statement they are aligned in one line (`apexExpandOneLineProperties`)
+- Add option to explicitly put the `private` keyword if the access modifier was not provided (`apexExplicitAccessModifier`)
+- Add option to place class member modifiers in the specific order. For fields: `<access> static final transient`, for methods: `<access> static/override virtual/abstract` (`apexSortModifiers`)
+
+# 1.12.0
+
+## Formatting Changes
+
+- Fix binaryish expressions having wrong indentation inside parentheses ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/693)).
+- Keep original position for comments in between If-Else blocks and Try-Catch blocks, accordingly fix issue with unprinted comment ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/688)).
+
+## Internal Changes
+
+- Use `yarn` for internal dependency management instead of `npm`. If you forked this repository before this change, make sure to follow [CONTRIBUTING.md](CONTRIBUTING.md) to set up your environment again.
+- `start-apex-server` and `stop-apex-server` no longer exports any methods. This should not affect any user functionality, but if you are a developer who's relying on those methods, please import `start` and `stop` from [http-server](src/http-server.ts) instead.
+
+# 1.11.0
+
 ## Dependency Changes
 
-- Drop support for NodeJS < 14
+- Drop support for NodeJS < 14.
 
 ## Internal Changes
 
@@ -17,10 +58,12 @@
 
 ## CLI Changes
 
+- **Breaking:** Locations for `start-apex-server.js` and `stop-apex-server.js` are changed - they are now in the `dist` directory.
 - Add ability to specify `host` and `port` options for built-in parsing server ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/476)).
 
 ## Formatting Changes
 
+- Add support for SOQL Geolocation Expression ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/674)).
 - Fix SOQL Time literals always getting printed in UTC timezone.
 - Fix wrong indentations inside long SELECT functions ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/495)).
 - Remove extraneous newline at the end of long GROUP BY and WITH DATA CATEGORY clauses ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/533)).

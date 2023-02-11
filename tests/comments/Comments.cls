@@ -608,6 +608,52 @@ class Comments {
     }
   }
 
+  void specialInBetweenConditionalComments() {
+    if (foo) {
+      System.debug('foo');
+    }
+    // foo own line in between comment 1
+    else if (bar) {
+      System.debug('bar');
+    }
+    // bar own line in between comment 1
+    else {
+      System.debug('baz');
+    }
+
+    if (foo) {
+      System.debug('foo');
+    } // foo trailing inline comment 2
+    else if (bar) {
+      System.debug('bar');
+    } // bar trailing inline comment 2
+    else {
+      System.debug('baz');
+    } // baz trailing inline comment 2
+
+    if (foo) {
+      System.debug('foo');
+    }
+    /* foo block in between comment 3 */
+    else if (bar) {
+      System.debug('bar');
+    }
+    /* bar block in between comment 3 */
+    else {
+      System.debug('baz');
+    }
+
+    if (foo) {
+      System.debug('foo');
+    } /* foo block trailing comment 4 */
+    else if (bar) {
+      System.debug('bar');
+    } /* bar block trailing comment 4 */
+    else {
+      System.debug('baz');
+    } /* baz block trailing comment 4 */
+  }
+
   void ternaryComments() {
     Integer initPrecedingCommentSingleLine =
       // Leading Inline Comment 1 for Ternary Expressions
@@ -680,6 +726,16 @@ class Comments {
 
     try {
       System.debug('Hi');
+    } // In between inline trailing comment 1
+    catch (Exception ex) {
+
+    } // In between inline trailing comment 1
+    finally {
+
+    } // finally trailing comment 1
+
+    try {
+      System.debug('Hi');
     }
     // In between inline comment 3
     catch (Exception ex) {
@@ -713,6 +769,16 @@ class Comments {
     finally {
       System.debug('World');
     }
+
+    try {
+      System.debug('Hi');
+    } /* In between trailing block comment 3 */
+    catch (Exception ex) {
+      System.debug('Hello');
+    } /* In between trailing block comment 4 */
+    finally {
+      System.debug('World');
+    } /* trailing block comment 1 */
   }
 
   void doWhileComments() {
@@ -741,8 +807,46 @@ class Comments {
     while (true);
   }
 
+  // Some comment here
+  @isTest(seeAllData = true)
+  // Dangling comment
+  public static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  @isTest(seeAllData = true)
+  /* Dangling comment */
+  public static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  @isTest(seeAllData = true)
+  /* 
+    Dangling comment 
+  */
+  // Comment
+  public static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
   @isTest // Decorator Trailing Inline Comment 1
-  void trailingCommentAfterMethodName() {
+  static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  // Some comment here
+  @isTest // Decorator Trailing Inline Comment 1
+  static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  @isTest // Decorator Trailing Inline Comment 1
+  static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  @isTest // Decorator Trailing Inline Comment 1
+  testmethod static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
@@ -753,17 +857,22 @@ class Comments {
 
   @isTest // Decorator Trailing Inline Comment 2
   @AuraEnabled // Decorater Trailing Inline Comment 3
-  void trailingCommentAfterMethodName() {
+  static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
   @isTest /* Decorator Trailing Block Comment 1 */
-  void trailingCommentAfterMethodName() {
+  static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  @isTest /* Decorator Trailing Block Comment 1 */
+  static testmethod void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
   /* Decorator Leading Block Comment 1 */ @isTest
-  void trailingCommentAfterMethodName() {
+  static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
@@ -771,7 +880,7 @@ class Comments {
     seeAllData = true // Method annotation inline comment 1
     //isParallel = false // Method annotation inline comment 2
   )
-  void methodAnnotationInlineComment() {
+  testmethod void methodAnnotationInlineComment() {
   }
 
   @isTest(

@@ -567,6 +567,7 @@ class Comments {
     }
     /*in between Block Comment 1 */
     else if (b > 2) {
+      // One more comment
       System.debug('Hello');
     }
     /*  in between Block Comment 2 */
@@ -576,6 +577,7 @@ class Comments {
     else if (d > 3) System.debug('World');
     /* In between Block Comment 4 */
     else {
+      // Some other comment here
     }
 
     if (true) {
@@ -655,7 +657,26 @@ class Comments {
     }
     // In between inline comment 2
     finally {
+      // Some other comment here
+    }
 
+    try {
+      System.debug('Hi');
+    }
+    catch (Exception ex) {
+      // In between inline comment 1
+    }
+    finally {
+      // In between inline comment 2
+    }
+
+    try {
+      System.debug('Hi');
+    }
+    // In between inline comment 1
+    catch (Exception ex) {
+    } finally {   // Some other comment here
+      // In between inline comment 2
     }
 
     try {

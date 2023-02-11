@@ -94,6 +94,9 @@ with sharing virtual   public @IsTest class ExplicitAccessModifier
         }
 
         override protected void methodTwo() {}
+
+        static webService void methodThree() {
+        }
     }
 
     interface InterfaceTest {
@@ -110,6 +113,12 @@ with sharing virtual   public @IsTest class ExplicitAccessModifier
     with sharing class EnumTest {
         public enum Season {WINTER, SPRING, SUMMER, FALL}
         enum Month {JANUARY}
+
+        public EnumTest(final String param) {
+        }
+
+        public EnumTest(String param, final Integer param2) {
+        }
 
         @TestVisible
         private enum AccountTypeOne {
@@ -132,10 +141,35 @@ with sharing virtual   public @IsTest class ExplicitAccessModifier
             PERSON_ACCOUNT
         }
 
-        void enumTest() {
+        void enumTest(final String param) {
             final Integer i = Season.WINTER.ordinal();
             String s = Season.SPRING.name();
             final Season[] values = Season.values();
         }
+    }
+
+    @isTest(seeAllData = true)
+    // Dangling comment
+    static void trailingCommentAfterMethodName() {
+        System.debug('Hi');
+    }
+
+    @isTest(seeAllData = true)
+    /* Dangling comment */
+    static void trailingCommentAfterMethodName() {
+        System.debug('Hi');
+    }
+
+    @isTest(seeAllData = true)
+    /* 
+      Dangling comment
+    */
+    static void trailingCommentAfterMethodName() {
+        System.debug('Hi');
+    }
+
+    @isTest // Decorator Trailing Inline Comment 1
+    public static void trailingCommentAfterMethodName() {
+        System.debug('Hi');
     }
 }

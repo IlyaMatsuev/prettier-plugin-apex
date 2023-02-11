@@ -1,3 +1,48 @@
+# 2.1.0
+
+## Formatting Changes
+
+### Convert `testmethod` modifier to the `@IsTest` annotation
+
+The `apexFormatAnnotations` option now will convert all `testmethod` method modifiers to the equivalent annotation. If the option `apexFormatAnnotations` is set to `true` then...
+
+This:
+
+```java
+public testmethod static someTestMethod() {
+}
+```
+
+Will become this:
+
+```java
+@IsTest
+public static someTestMethod() {
+}
+```
+
+### Convert `webservice` and `testmethod` modifier to lowecase
+
+Was:
+
+```java
+public TestMethod static someTestMethod() {
+}
+
+webService static someWebservice() {
+}
+```
+
+Now:
+
+```java
+public testmethod static someTestMethod() {
+}
+
+webservice static someWebservice() {
+}
+```
+
 # 2.0.0
 
 ## Formatting Changes

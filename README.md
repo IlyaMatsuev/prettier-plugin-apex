@@ -1,6 +1,6 @@
 # Prettier Apex [Not Opinionated]
 
-[![Build Status](https://img.shields.io/github/workflow/status/IlyaMatsuev/prettier-plugin-apex/Tests%20and%20Deployments.svg?label=Build%20Status)](https://github.com/IlyaMatsuev/prettier-plugin-apex/actions/workflows/tests-deployments.yml)
+[![Build Status](https://github.com/IlyaMatsuev/prettier-plugin-apex/actions/workflows/tests-deployments.yml/badge.svg?branch=master)](https://github.com/IlyaMatsuev/prettier-plugin-apex/actions/workflows/tests-deployments.yml)
 [![npm](https://img.shields.io/npm/v/@ilyamatsuev/prettier-plugin-apex.svg)](https://www.npmjs.com/package/@ilyamatsuev/prettier-plugin-apex)
 ![license](https://img.shields.io/npm/l/prettier-plugin-apex.svg)
 [![codecov](https://codecov.io/gh/IlyaMatsuev/prettier-plugin-apex/branch/master/graph/badge.svg?token=AAD15HSIB9)](https://codecov.io/gh/IlyaMatsuev/prettier-plugin-apex)
@@ -129,7 +129,7 @@ This is Not Opinionated formatter, so the there are multiple configurations avai
 | `apexStandalonePort`          | `2117`      | The port that the standalone Apex parser listens on.<br>Only applicable if `apexStandaloneParser` is `built-in`.                                                                                                               |
 | `apexStandaloneHost`          | `localhost` | The host that the standalone Apex parser listens on.<br>Only applicable if `apexStandaloneParser` is `built-in`.                                                                                                               |
 | `apexInsertFinalNewline`      | `true`      | Whether a newline is added as the last thing in the output                                                                                                                                                                     |
-| `apexFormatAnnotations`       | `false`     | Format Apex annotations to the upper camel case.                                                                                                                                                                               |
+| `apexFormatAnnotations`       | `false`     | Format Apex annotations to the upper camel case. Also converts `testmethod` modifier to `@IsTest` case.                                                                                                                        |
 | `apexFormatStandardTypes`     | `false`     | Format the most popular Apex standard types. For example: `System`, `Map`, `DateTime`, `SObject` etc.                                                                                                                          |
 | `apexFormatInlineComments`    | `false`     | Format the inline comments to have a space and start from a capital letter.                                                                                                                                                    |
 | `apexAnnotationsArgsSpacing`  | `false`     | Add spaces between an annotation argument and value. For example: `@Future(callout = true)`.                                                                                                                                   |

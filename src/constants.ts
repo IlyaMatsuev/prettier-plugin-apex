@@ -353,8 +353,8 @@ export const MODIFIER = {
   "apex.jorje.data.ast.Modifier$ProtectedModifier": "protected" as const,
   "apex.jorje.data.ast.Modifier$AbstractModifier": "abstract" as const,
   "apex.jorje.data.ast.Modifier$StaticModifier": "static" as const,
-  "apex.jorje.data.ast.Modifier$TestMethodModifier": "testMethod" as const,
-  "apex.jorje.data.ast.Modifier$WebServiceModifier": "webService" as const,
+  "apex.jorje.data.ast.Modifier$TestMethodModifier": "testmethod" as const,
+  "apex.jorje.data.ast.Modifier$WebServiceModifier": "webservice" as const,
   "apex.jorje.data.ast.Modifier$FinalModifier": "final" as const,
   "apex.jorje.data.ast.Modifier$TransientModifier": "transient" as const,
   "apex.jorje.data.ast.Modifier$GlobalModifier": "global" as const,
@@ -447,8 +447,15 @@ export const DEFAULT_ACCESS_MODIFIER = "private";
 
 export const ACCESS_MODIFIERS = ["private", "protected", "public", "global"];
 
+export const ACCESS_EXCEPTION_MODIFIERS = ["webservice"];
+
+export const ABSTRACT_MODIFIER = "abstract";
+
+export const TESTMETHOD_MODIFIER = "testmethod";
+
 export const MODIFIERS_PRIORITY = [
   ...ACCESS_MODIFIERS,
+  ...ACCESS_EXCEPTION_MODIFIERS,
   "static",
   "final",
   "transient",

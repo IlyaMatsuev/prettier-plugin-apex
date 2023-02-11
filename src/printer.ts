@@ -2,7 +2,6 @@ import prettier, { AstPath, Doc, ParserOptions } from "prettier";
 import { builders } from "prettier/doc";
 import {
   getTrailingComments,
-  isPrettierIgnore,
   printComment,
   printDanglingComment,
 } from "./comments";
@@ -11,6 +10,7 @@ import {
   checkIfParentIsDottedExpression,
   getPrecedence,
   isBinaryish,
+  isTriggerSource,
   normalizeAnnotationName,
   normalizeTypeName,
 } from "./util";
@@ -29,11 +29,15 @@ import {
   QUERY,
   QUERY_WHERE,
   ACCESS_MODIFIERS,
+  ACCESS_EXCEPTION_MODIFIERS,
   DEFAULT_ACCESS_MODIFIER,
   MODIFIERS_PRIORITY,
+  TESTMETHOD_MODIFIER,
+  ABSTRACT_MODIFIER,
 } from "./constants";
 import jorje from "../vendor/apex-ast-serializer/typings/jorje";
 import Concat = builders.Concat;
+import { EnrichedIfBlock } from "./parser";
 
 const docBuilders = prettier.doc.builders;
 const { align, concat, join, hardline, line, softline, group, indent, dedent } =
@@ -81,26 +85,75 @@ function pushIfExist(
   return parts;
 }
 
-function hasAccessModifiers(modifiers: Doc[], search: Doc[]): boolean {
+function hasModifiers(modifiers: Doc[], ...search: Doc[]): boolean {
   return !!findInDoc(
     modifiers,
-    (d) => (search.some((a) => d === a) ? d : undefined),
+    (d) =>
+      search.some((a) => {
+        if (typeof d === "string" && typeof a === "string") {
+          return d.toLowerCase() === a.toLowerCase();
+        }
+        return d === a;
+      })
+        ? d
+        : undefined,
     undefined,
   );
 }
 
-function sortModifiers(modifiers: Doc[], options: ParserOptions): Doc[] {
+function normalizeModifiers(modifiers: Doc[], options: ParserOptions): Doc[] {
   // For annotation there is always "@" at the beginning of the Doc
   const annotationModifiers = modifiers.filter(
     (m) => Array.isArray(m) && m[0] === "@",
   );
-  let nonAnnotationModifiers = modifiers.filter(
-    (m) => !Array.isArray(m) || m[0] !== "@",
-  );
+  let nonAnnotationModifiers = modifiers
+    .filter((m) => !Array.isArray(m) || m[0] !== "@")
+    .flat(2);
+
+  // Replace "testmethod" modifier with the "@IsTest" annotation
+  if (
+    options.apexFormatAnnotations &&
+    hasModifiers(nonAnnotationModifiers, TESTMETHOD_MODIFIER)
+  ) {
+    // Delete "testmethod" modifier and space after it
+    nonAnnotationModifiers.splice(
+      nonAnnotationModifiers.indexOf(TESTMETHOD_MODIFIER),
+      2,
+    );
+    if (!hasModifiers(annotationModifiers, "istest")) {
+      annotationModifiers.unshift(["@IsTest", hardline]);
+    }
+  }
+
+  // Add default modifier (private) if the option is enabled
+  if (
+    options.apexExplicitAccessModifier &&
+    !isTriggerSource(options.filepath) &&
+    options.parser === "apex" &&
+    !hasModifiers(
+      nonAnnotationModifiers,
+      ...ACCESS_MODIFIERS,
+      ...ACCESS_EXCEPTION_MODIFIERS,
+    )
+  ) {
+    nonAnnotationModifiers.unshift(DEFAULT_ACCESS_MODIFIER, " ");
+  }
+
+  // Sort modifiers if the option is enabled
   if (options.apexSortModifiers && nonAnnotationModifiers.length) {
+    const danglingComments = modifiers
+      .flat(2)
+      .filter(
+        (m) =>
+          Array.isArray(m) &&
+          m.length &&
+          typeof m[0] === "string" &&
+          (m[0].startsWith("//") ||
+            (m[0].startsWith("/*") && m[0].endsWith("*/"))),
+      );
     nonAnnotationModifiers = [
+      ...danglingComments,
       nonAnnotationModifiers
-        .flat()
         .filter((m) => typeof m === "string" && m.trim())
         .sort((a, b) => {
           const aPriority = MODIFIERS_PRIORITY.indexOf(a as string);
@@ -117,22 +170,9 @@ function sortModifiers(modifiers: Doc[], options: ParserOptions): Doc[] {
       " ",
     ];
   }
+
   // Put annotations first
   return [...annotationModifiers, ...nonAnnotationModifiers];
-}
-
-function handleDefaultAccessModifier(
-  modifiers: Doc[],
-  options: ParserOptions,
-): Doc[] {
-  if (
-    options.apexExplicitAccessModifier &&
-    options.parser === "apex" &&
-    !hasAccessModifiers(modifiers, ACCESS_MODIFIERS)
-  ) {
-    modifiers.unshift([DEFAULT_ACCESS_MODIFIER, " "]);
-  }
-  return modifiers;
 }
 
 function isOneLineStatement(textStatement: string): boolean {
@@ -258,6 +298,24 @@ function handleBinaryishExpression(path: AstPath, print: printFn): Doc {
   const isTopMostParentNodeWithoutGrouping =
     isNodeSamePrecedenceAsLeftChild && !isNestedExpression;
 
+  // If this expression is directly inside parentheses, we want to give it
+  // an extra level indentation, i.e.:
+  // ```
+  // createObject(
+  //   firstBoolean &&
+  //      secondBoolean
+  // );
+  // ```
+  // This is different behavior vs when the expression is in a variable
+  // declaration, i.e.:
+  // ```
+  // firstBoolean =
+  //   secondBoolean &&
+  //   thirdBoolean;
+  // ```
+  // This behavior is consistent with how upstream formats Javascript
+  const shouldIndentTopMostExpression = node.insideParenthesis;
+
   if (
     isLeftChildNodeWithoutGrouping ||
     leftChildNodeSamePrecedenceAsRightChildNode ||
@@ -266,7 +324,7 @@ function handleBinaryishExpression(path: AstPath, print: printFn): Doc {
     docs.push(leftDoc);
     docs.push(" ");
     docs.push(concat([operationDoc, line, rightDoc]));
-    return concat(docs);
+    return shouldIndentTopMostExpression ? indentConcat(docs) : concat(docs);
   }
   if (hasRightChildNodeWithoutGrouping) {
     docs.push(group(leftDoc));
@@ -636,8 +694,8 @@ function handleInterfaceDeclaration(
   const node = path.getValue();
 
   const superInterface: Doc = path.call(print, "superInterface", "value");
-  const modifierDocs: Doc[] = sortModifiers(
-    handleDefaultAccessModifier(path.map(print, "modifiers"), options),
+  const modifierDocs: Doc[] = normalizeModifiers(
+    path.map(print, "modifiers"),
     options,
   );
   const memberParts = path
@@ -702,8 +760,8 @@ function handleClassDeclaration(
 ): Doc {
   const node = path.getValue();
   const superClass: Doc = path.call(print, "superClass", "value");
-  const modifierDocs: Doc[] = sortModifiers(
-    handleDefaultAccessModifier(path.map(print, "modifiers"), options),
+  const modifierDocs: Doc[] = normalizeModifiers(
+    path.map(print, "modifiers"),
     options,
   );
   const memberParts = path
@@ -919,8 +977,8 @@ function handlePropertyDeclaration(
   print: printFn,
   options: ParserOptions,
 ): Doc {
-  const modifierDocs: Doc[] = sortModifiers(
-    handleDefaultAccessModifier(path.map(print, "modifiers"), options),
+  const modifierDocs: Doc[] = normalizeModifiers(
+    path.map(print, "modifiers"),
     options,
   );
   const getterDoc: Doc = path.call(print, "getter", "value");
@@ -986,13 +1044,10 @@ function handleMethodDeclaration(
   const parts: Doc[] = [];
   const parameterParts = [];
   // Modifiers
-  if (statementDoc || hasAccessModifiers(modifierDocs, ["abstract"])) {
+  if (statementDoc || hasModifiers(modifierDocs, ABSTRACT_MODIFIER)) {
     // There is no statement if this is an interface method or abstract method
     // But for abstract methods it's possible to have access modifier
-    modifierDocs = sortModifiers(
-      handleDefaultAccessModifier(modifierDocs, options),
-      options,
-    );
+    modifierDocs = normalizeModifiers(modifierDocs, options);
   }
   if (modifierDocs.length > 0) {
     parts.push(modifierDocs);
@@ -1018,22 +1073,10 @@ function handleMethodDeclaration(
   return concat(parts);
 }
 
-function handleModifierParameterRef(
-  path: AstPath,
-  print: printFn,
-  options: ParserOptions,
-): Doc {
+function handleModifierParameterRef(path: AstPath, print: printFn): Doc {
   const parts: Doc[] = [];
   // Modifiers
-  parts.push(
-    join(
-      "",
-      sortModifiers(
-        handleDefaultAccessModifier(path.map(print, "modifiers"), options),
-        options,
-      ),
-    ),
-  );
+  parts.push(...path.map(print, "modifiers"));
   // Type
   parts.push(path.call(print, "typeRef"));
   parts.push(" ");
@@ -1108,8 +1151,8 @@ function handleEnumDeclaration(
   print: printFn,
   options: ParserOptions,
 ): Doc {
-  const modifierDocs: Doc[] = sortModifiers(
-    handleDefaultAccessModifier(path.map(print, "modifiers"), options),
+  const modifierDocs: Doc[] = normalizeModifiers(
+    path.map(print, "modifiers"),
     options,
   );
   const memberDocs: Doc[] = path.map(print, "members");
@@ -1199,8 +1242,16 @@ function handleEnumCase(path: AstPath, print: printFn): Doc {
   return join(".", path.map(print, "identifiers"));
 }
 
+function handleInputParameters(path: AstPath, print: printFn): Doc[] {
+  // In most cases, the descendant nodes inside `inputParameters` will create
+  // their own groups. However, in certain circumstances (i.e. with binaryish
+  // behavior), they rely on groups created by their parents. That's why we
+  // wrap each inputParameter in a group here. See #693 for an example case.
+  return path.map(print, "inputParameters").map((paramDoc) => group(paramDoc));
+}
+
 function handleRunAsBlock(path: AstPath, print: printFn): Doc {
-  const paramDocs: Doc[] = path.map(print, "inputParameters");
+  const paramDocs: Doc[] = handleInputParameters(path, print);
   const statementDoc: Doc = path.call(print, "stmnt");
 
   const parts: Doc[] = [];
@@ -1241,6 +1292,7 @@ function handleBlockStatement(
 }
 
 function handleTryCatchFinallyBlock(path: AstPath, print: printFn): Doc {
+  const node = path.getNode();
   const tryStatementDoc: Doc = path.call(print, "tryBlock");
   const catchBlockDocs: Doc[] = path.map(print, "catchBlocks");
   const finallyBlockDoc: Doc = path.call(print, "finallyBlock", "value");
@@ -1249,12 +1301,57 @@ function handleTryCatchFinallyBlock(path: AstPath, print: printFn): Doc {
   parts.push("try");
   parts.push(" ");
   pushIfExist(parts, tryStatementDoc);
+
+  const tryBlockContainsTrailingComments: boolean =
+    node.tryBlock.comments?.some(
+      (comment: AnnotatedComment) => comment.trailing,
+    );
+
+  let catchBlockContainsLeadingOwnLineComments: boolean[] = [];
+  let catchBlockContainsTrailingComments: boolean[] = [];
   if (catchBlockDocs.length > 0) {
-    // Can't use pushIfExist here because it doesn't check for Array type
-    parts.push(" ");
-    parts.push(join(" ", catchBlockDocs));
+    catchBlockContainsLeadingOwnLineComments = node.catchBlocks.map(
+      (catchBlock: jorje.CatchBlock & { comments?: AnnotatedComment[] }) =>
+        catchBlock.comments?.some(
+          (comment: AnnotatedComment) =>
+            comment.leading && comment.placement === "ownLine",
+        ),
+    );
+    catchBlockContainsTrailingComments = node.catchBlocks.map(
+      (catchBlock: jorje.CatchBlock & { comments?: AnnotatedComment[] }) =>
+        catchBlock.comments?.some(
+          (comment: AnnotatedComment) => comment.trailing,
+        ),
+    );
+    catchBlockDocs.forEach((catchBlockDoc: Doc, index: number) => {
+      const shouldAddHardLineBeforeCatch =
+        catchBlockContainsLeadingOwnLineComments[index] ||
+        catchBlockContainsTrailingComments[index - 1] ||
+        (index === 0 && tryBlockContainsTrailingComments);
+      if (shouldAddHardLineBeforeCatch) {
+        parts.push(hardline);
+      } else {
+        parts.push(" ");
+      }
+      parts.push(catchBlockDoc);
+    });
   }
-  pushIfExist(parts, finallyBlockDoc, null, [" "]);
+  const finallyBlockContainsLeadingOwnLineComments =
+    node.finallyBlock?.value?.comments?.some(
+      (comment: AnnotatedComment) =>
+        comment.leading && comment.placement === "ownLine",
+    );
+  const shouldAddHardLineBeforeFinally =
+    finallyBlockContainsLeadingOwnLineComments ||
+    (catchBlockContainsTrailingComments.length > 0 &&
+      catchBlockContainsTrailingComments[
+        catchBlockContainsTrailingComments.length - 1
+      ]) ||
+    (catchBlockContainsTrailingComments.length === 0 &&
+      tryBlockContainsTrailingComments);
+  pushIfExist(parts, finallyBlockDoc, null, [
+    shouldAddHardLineBeforeFinally ? hardline : " ",
+  ]);
   return concat(parts);
 }
 
@@ -1289,10 +1386,7 @@ function handleVariableDeclarations(
   // Modifiers
   if (path.getParentNode()["@class"] === APEX_TYPES.FIELD_MEMBER) {
     // Add private access modifier if this is a class field
-    modifierDocs = sortModifiers(
-      handleDefaultAccessModifier(modifierDocs, options),
-      options,
-    );
+    modifierDocs = normalizeModifiers(modifierDocs, options);
   }
   parts.push(join("", modifierDocs));
 
@@ -1344,7 +1438,7 @@ function handleVariableDeclaration(path: AstPath, print: printFn): Doc {
 }
 
 function handleNewStandard(path: AstPath, print: printFn): Doc {
-  const paramDocs: Doc[] = path.map(print, "inputParameters");
+  const paramDocs: Doc[] = handleInputParameters(path, print);
   const parts: Doc[] = [];
   // Type
   parts.push(path.call(print, "type"));
@@ -1397,7 +1491,7 @@ function handleThisMethodCallExpression(path: AstPath, print: printFn): Doc {
   parts.push("this");
   parts.push("(");
   parts.push(softline);
-  const paramDocs: Doc[] = path.map(print, "inputParameters");
+  const paramDocs: Doc[] = handleInputParameters(path, print);
   parts.push(join(concat([",", line]), paramDocs));
   parts.push(dedent(softline));
   parts.push(")");
@@ -1409,7 +1503,7 @@ function handleSuperMethodCallExpression(path: AstPath, print: printFn): Doc {
   parts.push("super");
   parts.push("(");
   parts.push(softline);
-  const paramDocs: Doc[] = path.map(print, "inputParameters");
+  const paramDocs: Doc[] = handleInputParameters(path, print);
   parts.push(join(concat([",", line]), paramDocs));
   parts.push(dedent(softline));
   parts.push(")");
@@ -1459,7 +1553,7 @@ function handleMethodCallExpression(
       return normalized === "Id" ? n : normalized;
     });
   }
-  const paramDocs: Doc[] = path.map(print, "inputParameters");
+  const paramDocs: Doc[] = handleInputParameters(path, print);
 
   const resultParamDoc =
     paramDocs.length > 0
@@ -1577,7 +1671,7 @@ function handleJavaMethodCallExpression(path: AstPath, print: printFn): Doc {
   parts.push(join(".", path.map(print, "names")));
   parts.push("(");
   parts.push(softline);
-  parts.push(join(concat([",", line]), path.map(print, "inputParameters")));
+  parts.push(join(concat([",", line]), handleInputParameters(path, print)));
   parts.push(dedent(softline));
   parts.push(")");
   return groupIndentConcat(parts);
@@ -1752,34 +1846,33 @@ function handleIfElseBlock(path: AstPath, print: printFn): Doc {
   // else if (c) {
   //   b = 2;
   // }
-  const ifBlockContainsBlockStatement = node.ifBlocks.map(
+  const ifBlockContainsBlockStatement: boolean[] = node.ifBlocks.map(
     (ifBlock: jorje.IfBlock) =>
       ifBlock.stmnt["@class"] === APEX_TYPES.BLOCK_STATEMENT,
   );
-  // #464 - Since we allow prettier-ignore comment in the middle of if/else
-  // blocks, we need to make sure that the blocks (both IfBlock and ElseBlock)
-  // trailing this comment is printed correctly.
-  // One major difference is that if a block is ignored, Prettier automatically
-  // prints everything as-is from the user code, which means we don't need to
-  // add `else` literal in between IfBlocks in the final output.
-  const ifBlockContainsPrettierIgnore = node.ifBlocks.map(
+  const ifBlockContainsLeadingOwnLineComments: boolean[] = node.ifBlocks.map(
     (ifBlock: jorje.IfBlock & { comments?: AnnotatedComment[] }) =>
       ifBlock.comments?.some(
-        (comment) => comment.leading && isPrettierIgnore(comment),
+        (comment) => comment.leading && comment.placement === "ownLine",
       ),
+  );
+  const ifBlockContainsTrailingComments: boolean[] = node.ifBlocks.map(
+    (ifBlock: jorje.IfBlock & { comments?: AnnotatedComment[] }) =>
+      ifBlock.comments?.some((comment) => comment.trailing),
   );
 
   let lastIfBlockHardLineInserted = false;
   ifBlockDocs.forEach((ifBlockDoc: Doc, index: number) => {
     if (index > 0) {
-      parts.push(
-        ifBlockContainsPrettierIgnore[index]
-          ? hardline
-          : concat([
-              ifBlockContainsBlockStatement[index - 1] ? " " : hardline,
-              "else ",
-            ]),
-      );
+      const shouldAddHardLineBeforeElseIf =
+        !ifBlockContainsBlockStatement[index - 1] ||
+        ifBlockContainsLeadingOwnLineComments[index] ||
+        ifBlockContainsTrailingComments[index - 1];
+      if (shouldAddHardLineBeforeElseIf) {
+        parts.push(hardline);
+      } else {
+        parts.push(" ");
+      }
     }
     parts.push(ifBlockDoc);
     // We also need to handle the last if block, since it might need to add
@@ -1794,13 +1887,20 @@ function handleIfElseBlock(path: AstPath, print: printFn): Doc {
     }
   });
   if (elseBlockDoc) {
-    // #464 - see previous note above IfBlock handling
-    const elseBlockContainsPrettierIgnore =
+    const elseBlockContainsLeadingOwnLineComments =
       node.elseBlock?.value?.comments?.some(
         (comment: AnnotatedComment) =>
-          comment.leading && isPrettierIgnore(comment),
+          comment.leading && comment.placement === "ownLine",
       );
-    if (elseBlockContainsPrettierIgnore && !lastIfBlockHardLineInserted) {
+    const lastIfBlockContainsTrailingComments =
+      ifBlockContainsTrailingComments[
+        ifBlockContainsTrailingComments.length - 1
+      ];
+    const shouldAddHardLineBeforeElse =
+      !lastIfBlockHardLineInserted &&
+      (elseBlockContainsLeadingOwnLineComments ||
+        lastIfBlockContainsTrailingComments);
+    if (shouldAddHardLineBeforeElse) {
       parts.push(hardline);
     }
     parts.push(elseBlockDoc);
@@ -1809,11 +1909,16 @@ function handleIfElseBlock(path: AstPath, print: printFn): Doc {
 }
 
 function handleIfBlock(path: AstPath, print: printFn): Doc {
+  const node: EnrichedIfBlock = path.getNode();
   const statementType: Doc = path.call(print, "stmnt", "@class");
   const statementDoc: Doc = path.call(print, "stmnt");
 
   const parts: Doc[] = [];
   const conditionParts = [];
+  if (node.ifBlockIndex > 0) {
+    parts.push("else");
+    parts.push(" ");
+  }
   parts.push("if");
   parts.push(" ");
   // Condition expression
