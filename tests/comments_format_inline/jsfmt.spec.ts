@@ -1,1 +1,1 @@
-runSpec(__dirname, ["apex"], { apexFormatInlineComments: true });
+runSpec(__dirname, ["apex"], { apexFormatInlineComments: "none" });

@@ -66,6 +66,18 @@ export function isApexDocComment(comment: jorje.BlockComment): boolean {
 }
 
 /**
+ * Check if this comment is an inline comment.
+ * @param comment the comment to check.
+ */
+export function isInlineComment(comment: string): boolean {
+  const inlineCommentPrefix = "//";
+  return (
+    comment.startsWith(inlineCommentPrefix) &&
+    comment.length > inlineCommentPrefix.length
+  );
+}
+
+/**
  * Check if the file is a trigger source by the provided file path
  * @param filePath The absolute or relative file path
  * @returns true if the source file is for Salesforce trigger

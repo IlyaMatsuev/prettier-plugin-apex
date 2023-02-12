@@ -1,3 +1,48 @@
+# Unreleased
+
+## Formatting Changes
+
+### Change the formatting behaviour for the `apexFormatInlineComments` option
+
+Now this option is a `choice`. Below is the input code snippet and the examples of how it could be formatted with different option values:
+
+Input:
+
+```java
+//some inline comment
+//   another inline comment
+```
+
+Output:
+
+- `none`
+
+```java
+//some inline comment
+//   another inline comment
+```
+
+- `spaced`
+
+```java
+// some inline comment
+//   another inline comment
+```
+
+- `trimed`
+
+```java
+// some inline comment
+// another inline comment
+```
+
+- `strict`
+
+```java
+// Some inline comment
+// Another inline comment
+```
+
 # 2.1.0
 
 ## Formatting Changes

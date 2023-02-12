@@ -3,13 +3,13 @@ import prettier from "prettier";
 
 declare module "prettier" {
   interface RequiredOptions {
-    apexStandaloneParser: string;
+    apexStandaloneParser: "none" | "built-in";
     apexStandalonePort: number;
     apexStandaloneHost: string;
     apexInsertFinalNewline: boolean;
     apexFormatAnnotations: boolean;
     apexFormatStandardTypes: boolean;
-    apexFormatInlineComments: boolean;
+    apexFormatInlineComments: "none" | "spaced" | "trimed" | "strict";
     apexAnnotationsArgsSpacing: boolean;
     apexEmptyBlockBracketLine: boolean;
     apexExpandOneLineProperties: boolean;
