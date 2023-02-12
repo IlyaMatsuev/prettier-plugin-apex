@@ -86,6 +86,20 @@ export function isTriggerSource(filePath: string): boolean {
   return filePath.endsWith(".trigger");
 }
 
+/**
+ * Check if the block text has an extra new line in it
+ * @param blockText The block text content
+ * @returns true if there is more than 1 new line in the block
+ */
+export function doesBlockHaveExtraNewLine(blockText: string): boolean {
+  const openBraceIndex = blockText.indexOf("{");
+  if (openBraceIndex === -1) {
+    return false;
+  }
+  const blockTextOnly = blockText.substring(openBraceIndex);
+  return /^{(\s*\n){2,}\s*[^\s}]/.test(blockTextOnly);
+}
+
 export function checkIfParentIsDottedExpression(path: AstPath): boolean {
   const node = path.getValue();
   const parentNode = path.getParentNode();

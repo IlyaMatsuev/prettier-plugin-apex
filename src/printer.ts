@@ -11,6 +11,7 @@ import {
   getPrecedence,
   isBinaryish,
   isTriggerSource,
+  doesBlockHaveExtraNewLine,
   normalizeAnnotationName,
   normalizeTypeName,
 } from "./util";
@@ -737,10 +738,19 @@ function handleInterfaceDeclaration(
   }
   parts.push(" ");
   parts.push("{");
+
+  const nodeOriginalText = options.originalText.substring(
+    options.locStart(node),
+    options.locEnd(node),
+  );
+  if (doesBlockHaveExtraNewLine(nodeOriginalText)) {
+    parts.push(hardline);
+  }
+
   if (danglingCommentDocs.length > 0) {
-    parts.push(indent(concat([hardline, ...danglingCommentDocs])));
+    parts.push(indent([hardline, ...danglingCommentDocs]));
   } else if (memberDocs.length > 0) {
-    parts.push(indent(concat([hardline, ...memberDocs])));
+    parts.push(indent([hardline, ...memberDocs]));
   }
   if (
     danglingCommentDocs.length ||
@@ -810,10 +820,19 @@ function handleClassDeclaration(
   }
   parts.push(" ");
   parts.push("{");
+
+  const nodeOriginalText = options.originalText.substring(
+    options.locStart(node),
+    options.locEnd(node),
+  );
+  if (doesBlockHaveExtraNewLine(nodeOriginalText)) {
+    parts.push(hardline);
+  }
+
   if (danglingCommentDocs.length > 0) {
-    parts.push(indent(concat([hardline, ...danglingCommentDocs])));
+    parts.push(indent([hardline, ...danglingCommentDocs]));
   } else if (memberDocs.length > 0) {
-    parts.push(indent(concat([hardline, ...memberDocs])));
+    parts.push(indent([hardline, ...memberDocs]));
   }
   if (
     danglingCommentDocs.length ||
