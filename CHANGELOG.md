@@ -1,3 +1,9 @@
+# Unreleased
+
+## Formatting Changes
+
+- Change the formatting behaviour for `apexFormatInlineComments`. It's now a choice option. Check out how it can be used in the [changelog examples](/CHANGELOG.examples.md) [issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/22).
+
 # 2.1.0
 
 ## Internal Changes

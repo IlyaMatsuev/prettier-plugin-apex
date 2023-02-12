@@ -1,15 +1,16 @@
 /* eslint no-param-reassign: 0, no-plusplus: 0, no-else-return: 0, consistent-return: 0 */
 
 import prettier, { AstPath, Doc, ParserOptions } from "prettier";
-
 import {
   AnnotatedComment,
   capitalize,
   GenericComment,
   isApexDocComment,
+  isInlineComment,
   isBinaryish,
 } from "./util";
 import jorje from "../vendor/apex-ast-serializer/typings/jorje";
+import * as constants from "./constants";
 
 const { concat, join, lineSuffix, hardline } = prettier.doc.builders;
 const {
@@ -19,25 +20,33 @@ const {
   hasNewlineInRange,
   skipWhitespace,
 } = prettier.util;
-const constants = require("./constants");
 
 const apexTypes = constants.APEX_TYPES;
 
 /**
- * Formats the inline comment to have a space and start from a capital letter
- * @param comment the comment to print.
+ * Formats the inline comment according to the `apexFormatInlineComments` option
+ * @param formatOption the `apexFormatInlineComments` option value
+ * @param comment the comment to print
  */
-function formatInlineComment(comment: string): string {
-  const inlineComment = "//";
-  if (
-    comment.startsWith(inlineComment) &&
-    comment.length > inlineComment.length
-  ) {
-    return `${inlineComment} ${capitalize(
-      comment.substring(inlineComment.length).trim(),
-    )}`;
+function formatInlineComment(
+  formatOption: "none" | "spaced" | "trimed" | "strict",
+  comment: string,
+): string {
+  if (formatOption === "none") {
+    return comment;
   }
-  return comment;
+
+  const commentText = comment.substring("//".length);
+  if (formatOption === "spaced") {
+    return `//${commentText.startsWith(" ") ? commentText : ` ${commentText}`}`;
+  } else if (formatOption === "trimed") {
+    return `// ${commentText.trim()}`;
+  } else if (formatOption === "strict") {
+    return `// ${capitalize(commentText.trim())}`;
+  }
+  throw new Error(
+    `Invalid value detected for the "apexFormatInlineComments" option: ${formatOption}. Allowed values are: "none", "spaced", "trimed" and "strict"`,
+  );
 }
 
 /**
@@ -84,10 +93,10 @@ export function printComment(path: AstPath, options: ParserOptions): Doc {
   const node = path.getValue();
   if (isApexDocComment(node)) {
     result = printApexDocComment(node);
+  } else if (isInlineComment(node.value)) {
+    result = formatInlineComment(options.apexFormatInlineComments, node.value);
   } else {
-    result = options.apexFormatInlineComments
-      ? formatInlineComment(node.value)
-      : node.value;
+    result = node.value;
   }
   if (comment.trailingEmptyLine) {
     result = concat([result, hardline]);
