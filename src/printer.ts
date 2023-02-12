@@ -449,11 +449,7 @@ function handleArrayExpressionIndex(
   return withGroup ? groupIndentConcat(parts) : concat(parts);
 }
 
-function handleVariableExpression(
-  path: AstPath,
-  print: printFn,
-  options: ParserOptions,
-): Doc {
+function handleVariableExpression(path: AstPath, print: printFn): Doc {
   const node = path.getValue();
   const parentNode = path.getParentNode();
   const nodeName = path.getName();
@@ -470,20 +466,7 @@ function handleVariableExpression(
         dottedExpr.value.expr["@class"] === APEX_TYPES.SOQL_EXPRESSION));
 
   parts.push(dottedExpressionDoc);
-  // Name chain
-  let names: Doc[] = path.map(print, "names");
-  if (options.apexFormatStandardTypes) {
-    names = names.map((n) => {
-      const normalized = normalizeTypeName(n);
-      // It's possible to have a field of class with the lowecase name id
-      // private Id id;
-      // In this case the following statement: Id result = customEntity.id;
-      // Would result in this: Id result = customEntity.Id;
-      // Which is not preferable. So, if we see an 'id' name in the variable assignment expression, don't format it and leave it as it is
-      return normalized === "Id" ? n : normalized;
-    });
-  }
-  parts.push(join(".", names));
+  parts.push(join(".", path.map(print, "names")));
 
   // Technically, in a typical array expression (e.g: a[b]),
   // the variable expression is a child of the array expression.
@@ -1529,11 +1512,7 @@ function handleSuperMethodCallExpression(path: AstPath, print: printFn): Doc {
   return groupIndentConcat(parts);
 }
 
-function handleMethodCallExpression(
-  path: AstPath,
-  print: printFn,
-  options: ParserOptions,
-): Doc {
+function handleMethodCallExpression(path: AstPath, print: printFn): Doc {
   const node = path.getValue();
   const parentNode = path.getParentNode();
   const nodeName = path.getName();
@@ -1556,22 +1535,6 @@ function handleMethodCallExpression(
     dottedExpr.value["@class"] === APEX_TYPES.SUPER_VARIABLE_EXPRESSION;
 
   const dottedExpressionDoc = handleDottedExpression(path, print);
-  let names: Doc[] = path.map(print, "names");
-  if (options.apexFormatStandardTypes) {
-    names = names.map((n, i) => {
-      // The last name is always for method
-      if (names.length - 1 === i) {
-        return n;
-      }
-      const normalized = normalizeTypeName(n);
-      // It's possible to have a field of class with the lowecase name id
-      // private Id id;
-      // In this case the following statement: Id result = customEntity.id.toString();
-      // Would result in this: Id result = customEntity.Id.toString();
-      // Which is not preferable. So, if we see an 'id' name in the variable assignment expression, don't format it and leave it as it is
-      return normalized === "Id" ? n : normalized;
-    });
-  }
   const paramDocs: Doc[] = handleInputParameters(path, print);
 
   const resultParamDoc =
@@ -1583,7 +1546,7 @@ function handleMethodCallExpression(
         ])
       : "";
 
-  const methodCallChainDoc = join(".", names);
+  const methodCallChainDoc = join(".", path.map(print, "names"));
 
   // Handling the array expression index.
   // Technically, in this statement: a()[b],
