@@ -2,6 +2,43 @@
 
 ## Formatting Changes
 
+### Allow an extra line break in the beginning of the class/interface declaration
+
+It's possible now to have an additional line break in the begginning of a class body to improve the readability. But it's not forced. Meaning that if it was not added in the source code, it will not be added by Prettier.
+
+Input:
+
+```java
+class Test {
+
+
+    private class InnerTest {
+        public Integer q;
+    }
+
+    private class InnerTest2 {
+
+        public Integer q;
+    }
+}
+```
+
+Output:
+
+```java
+class Test {
+
+    private class InnerTest {
+        public Integer q;
+    }
+
+    private class InnerTest2 {
+
+        public Integer q;
+    }
+}
+```
+
 ### Change the formatting behaviour for the `apexFormatInlineComments` option
 
 Now this option is a `choice`. Below is the input code snippet and the examples of how it could be formatted with different option values:

@@ -1,4 +1,6 @@
-class BlockMember {
+class BlockMember { 
+
+
   String fieldMemberOne;
   String anotherFieldMember = 'Hello';
   private transient String anotherFieldMemberTwo;
@@ -35,11 +37,16 @@ class BlockMember {
     }
   }
   class StaticStatementBlockMember {
+
     static {
       System.debug('Static Statement Block Member');
     }
   }
   interface InnerInterface {
+    void interfaceMethod();
+  }
+  interface InnerInterface2 {
+
     void interfaceMethod();
   }
   enum TestEnum { ONE, TWO }

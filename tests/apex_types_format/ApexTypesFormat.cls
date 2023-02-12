@@ -1,4 +1,5 @@
 class ApexTypesFormat {
+          
   private list<String> aCopy = new list<string>(veryLongVariable.getOneSet().getAnotherSet().getYetAnotherSet());
   private static list<string> aCopy = new list<string>(superDuperVeryInsanelyLongVariableNameThatWillSurelyBreak.getOneSet().getAnotherSet().getYetAnotherSet());
 
