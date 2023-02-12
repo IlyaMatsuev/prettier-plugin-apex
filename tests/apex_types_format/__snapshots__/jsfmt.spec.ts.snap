@@ -230,10 +230,10 @@ class ApexTypesFormat {
   }
 
   void chainTest() {
-    System.debug('qweqw');
-    DateTime q = System.now().toDate();
-    Id w = Schema.SObject.ID;
-    String e = Schema.SObject.ID.toString();
+    system.debug('qweqw');
+    DateTime q = system.now().toDate();
+    Id w = SCHEMA.sobjecT.ID;
+    String e = SCHEMA.sobjecT.ID.toString();
     Id r = new Entity().id;
     e.map(1, 2).set('2')[set(1)];
   }

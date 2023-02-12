@@ -2,6 +2,7 @@
 
 ## Formatting Changes
 
+- Make the `apexFormatStandardTypes` option less powerful, removing the ability to correct chained methods calls. Now, the option will only work for types in declarations. This was made to increase reliability and make the output more predictable since it was possible that the variable name would be misinterpreted and printed uppercase, for example.
 - Allow an extra line break in the beginning of the class/interface declaration [issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/25).
 - Change the formatting behaviour for `apexFormatInlineComments`. It's now a choice option. Check out how it can be used in the [changelog examples](/CHANGELOG.examples.md) [issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/22).
 

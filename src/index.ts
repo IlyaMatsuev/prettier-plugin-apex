@@ -137,7 +137,7 @@ export const options = {
     category: CATEGORY_APEX,
     default: false,
     description:
-      "Format the most popular Apex standard types. For example: `System`, `Map`, `DateTime`, `SObject` etc.",
+      "Format the most popular Apex standard types for definitions (does not work for chained method calls). For example: `System`, `Map`, `DateTime`, `SObject` etc.",
   },
   apexFormatInlineComments: {
     type: "choice",
