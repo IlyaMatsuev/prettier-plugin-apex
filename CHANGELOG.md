@@ -1,3 +1,9 @@
+# 2.1.1
+
+## Internal Changes
+
+- Fix the issue with the package installation that was caused by `husky`.
+
 # 2.1.0
 
 ## Internal Changes
