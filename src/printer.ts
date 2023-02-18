@@ -882,16 +882,17 @@ function handleAnnotationKeyValue(
   options: ParserOptions,
 ): Doc {
   const parts: Doc[] = [];
+  // TODO: Should I fix the name of the argument to a proper case?
   parts.push(path.call(print, "key", "value"));
-  if (options.apexAnnotationsArgsSpacing) {
+  if (options.apexFormatAnnotations) {
     parts.push(" ");
   }
   parts.push("=");
-  if (options.apexAnnotationsArgsSpacing) {
+  if (options.apexFormatAnnotations) {
     parts.push(" ");
   }
   parts.push(path.call(print, "value"));
-  return concat(parts);
+  return parts;
 }
 
 function handleAnnotationValue(

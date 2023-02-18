@@ -130,7 +130,7 @@ export const options = {
     category: CATEGORY_APEX,
     default: false,
     description:
-      "Format Apex annotations to the upper camel case. Also converts `testmethod` modifier to `@IsTest`",
+      "Format Apex annotations to the upper camel case, adding spaces between annotation arguments. Also converts `testmethod` modifier to `@IsTest`",
   },
   apexFormatStandardTypes: {
     type: "boolean",
@@ -164,13 +164,6 @@ export const options = {
       },
     ],
     description: "Formats the inline comments to be more readable.",
-  },
-  apexAnnotationsArgsSpacing: {
-    type: "boolean",
-    category: CATEGORY_APEX,
-    default: false,
-    description:
-      "Add spaces between an annotation argument and value. For example: `@Future(callout = true)",
   },
   apexEmptyBlockBracketLine: {
     type: "boolean",
