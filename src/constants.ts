@@ -489,6 +489,29 @@ export const STANDARD_APEX_ANNOTATIONS = [
   "HttpDelete",
 ];
 
+export const STANDARD_APEX_ANNOTATION_ARG_NAMES = [
+  // @AuraEnabled
+  "cacheable",
+  // @Future
+  "callout",
+  // @InvocableMethod & @InvocableVariable
+  "label",
+  "description",
+  "category",
+  "configurationEditor",
+  "iconName",
+  "required",
+  // @JsonAccess
+  "serializable",
+  "deserializable",
+  // @IsTest
+  "seeAllData",
+  "onInstall",
+  "isParallel",
+  // @RestResource
+  "urlMapping",
+];
+
 export const STANDARD_APEX_TYPES = [
   // Collections
   "Map",

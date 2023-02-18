@@ -10,7 +10,6 @@ declare module "prettier" {
     apexFormatAnnotations: boolean;
     apexFormatStandardTypes: boolean;
     apexFormatInlineComments: "none" | "spaced" | "trimed" | "strict";
-    apexAnnotationsArgsSpacing: boolean;
     apexEmptyBlockBracketLine: boolean;
     apexExpandOneLineProperties: boolean;
     apexExplicitAccessModifier: boolean;

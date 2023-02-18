@@ -14,6 +14,7 @@ import {
   doesBlockHaveExtraNewLine,
   normalizeAnnotationName,
   normalizeTypeName,
+  normalizeAnnotationArgName,
 } from "./util";
 import {
   ASSIGNMENT,
@@ -882,16 +883,16 @@ function handleAnnotationKeyValue(
   options: ParserOptions,
 ): Doc {
   const parts: Doc[] = [];
-  parts.push(path.call(print, "key", "value"));
-  if (options.apexAnnotationsArgsSpacing) {
-    parts.push(" ");
+  let argName = path.call(print, "key", "value");
+  let separator = "=";
+  if (options.apexFormatAnnotations) {
+    argName = normalizeAnnotationArgName(argName);
+    separator = " = ";
   }
-  parts.push("=");
-  if (options.apexAnnotationsArgsSpacing) {
-    parts.push(" ");
-  }
+  parts.push(argName);
+  parts.push(separator);
   parts.push(path.call(print, "value"));
-  return concat(parts);
+  return parts;
 }
 
 function handleAnnotationValue(
@@ -913,7 +914,7 @@ function handleAnnotationValue(
       parts.push("'");
       break;
   }
-  return concat(parts);
+  return parts;
 }
 
 function handleAnnotationString(path: AstPath, print: printFn): Doc {
@@ -921,7 +922,7 @@ function handleAnnotationString(path: AstPath, print: printFn): Doc {
   parts.push("'");
   parts.push(path.call(print, "value"));
   parts.push("'");
-  return concat(parts);
+  return parts;
 }
 
 function handleClassTypeRef(
