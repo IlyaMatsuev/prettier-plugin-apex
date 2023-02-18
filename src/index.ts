@@ -130,7 +130,7 @@ export const options = {
     category: CATEGORY_APEX,
     default: false,
     description:
-      "Format Apex annotations to the upper camel case, adding spaces between annotation arguments. Also converts `testmethod` modifier to `@IsTest`",
+      "Format Apex annotations to the upper camel case; format annotation arguments to lower camel case; add spaces between annotation arguments; convert `testmethod` modifier to `@IsTest` annotation",
   },
   apexFormatStandardTypes: {
     type: "boolean",

@@ -2,6 +2,26 @@
 
 ## Formatting Changes
 
+### Improve annotations formatting
+
+Since now, the `apexFormatAnnotations` option will also format annotation arguments to lower camel case, adding spaces between arguments.
+
+Input:
+
+```java
+@istest(isparallel=true)
+public static void method() {
+}
+```
+
+Output:
+
+```java
+@IsTest(isParallel = true)
+public static void method() {
+}
+```
+
 ### Allow an extra line break in the beginning of the class/interface declaration
 
 It's possible now to have an additional line break in the begginning of a class body to improve the readability. But it's not forced. Meaning that if it was not added in the source code, it will not be added by Prettier.

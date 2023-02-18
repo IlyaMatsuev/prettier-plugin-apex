@@ -14,6 +14,7 @@ import {
   doesBlockHaveExtraNewLine,
   normalizeAnnotationName,
   normalizeTypeName,
+  normalizeAnnotationArgName,
 } from "./util";
 import {
   ASSIGNMENT,
@@ -882,15 +883,14 @@ function handleAnnotationKeyValue(
   options: ParserOptions,
 ): Doc {
   const parts: Doc[] = [];
-  // TODO: Should I fix the name of the argument to a proper case?
-  parts.push(path.call(print, "key", "value"));
+  let argName = path.call(print, "key", "value");
+  let separator = "=";
   if (options.apexFormatAnnotations) {
-    parts.push(" ");
+    argName = normalizeAnnotationArgName(argName);
+    separator = " = ";
   }
-  parts.push("=");
-  if (options.apexFormatAnnotations) {
-    parts.push(" ");
-  }
+  parts.push(argName);
+  parts.push(separator);
   parts.push(path.call(print, "value"));
   return parts;
 }
@@ -914,7 +914,7 @@ function handleAnnotationValue(
       parts.push("'");
       break;
   }
-  return concat(parts);
+  return parts;
 }
 
 function handleAnnotationString(path: AstPath, print: printFn): Doc {
@@ -922,7 +922,7 @@ function handleAnnotationString(path: AstPath, print: printFn): Doc {
   parts.push("'");
   parts.push(path.call(print, "value"));
   parts.push("'");
-  return concat(parts);
+  return parts;
 }
 
 function handleClassTypeRef(

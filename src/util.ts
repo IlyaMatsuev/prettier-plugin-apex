@@ -9,6 +9,7 @@ import {
   APEX_TYPES as apexTypes,
   STANDARD_APEX_ANNOTATIONS,
   STANDARD_APEX_TYPES,
+  STANDARD_APEX_ANNOTATION_ARG_NAMES,
 } from "./constants";
 
 export type SerializedAst = {
@@ -326,6 +327,10 @@ export function uncapitalize(input: Doc = ""): Doc {
 
 export function normalizeAnnotationName(name: Doc): Doc {
   return normalizeName(name, STANDARD_APEX_ANNOTATIONS);
+}
+
+export function normalizeAnnotationArgName(name: Doc): Doc {
+  return normalizeName(name, STANDARD_APEX_ANNOTATION_ARG_NAMES);
 }
 
 export function normalizeTypeName(name: Doc): Doc {
