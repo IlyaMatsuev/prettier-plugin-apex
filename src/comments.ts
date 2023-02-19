@@ -307,11 +307,11 @@ function handleBinaryishExpressionRightChildTrailingComment(
 }
 
 /**
- * In a if-else block, if there is an end of line comment for the inner statement, we want to
- * attach it to that statement on the right. This doesn't work by default if we force adding curly braces around the if/else block.
+ * In a if/else/for/while block, if there is an end of line comment for the inner statement, we want to
+ * attach it to that statement on the right. This doesn't work by default if we force adding curly braces around the block.
  * So this method does it instead.
  */
-function handleIfElseBlockRightTrailingComment(
+function handleBlockStatementTrailingComment(
   comment: AnnotatedComment,
   options: ParserOptions,
 ) {
@@ -324,17 +324,25 @@ function handleIfElseBlockRightTrailingComment(
     return false;
   }
   if (
-    precedingNode["@class"] === "apex.jorje.data.ast.IfBlock" ||
-    precedingNode["@class"] === "apex.jorje.data.ast.ElseBlock"
+    precedingNode["@class"] === apexTypes.IF_BLOCK ||
+    precedingNode["@class"] === apexTypes.ELSE_BLOCK
   ) {
     addTrailingComment(precedingNode.stmnt, comment);
     return true;
   }
-  if (precedingNode["@class"] === "apex.jorje.data.ast.Stmnt$IfElseBlock") {
+  if (precedingNode["@class"] === apexTypes.IF_ELSE_BLOCK) {
     const commentLeftStatement =
       precedingNode.elseBlock?.value?.stmnt ??
       precedingNode.ifBlocks[precedingNode.ifBlocks.length - 1].stmnt;
     addTrailingComment(commentLeftStatement, comment);
+    return true;
+  }
+  if (
+    (precedingNode["@class"] === apexTypes.WHILE_LOOP ||
+      precedingNode["@class"] === apexTypes.FOR_LOOP) &&
+    precedingNode.stmnt?.value
+  ) {
+    addTrailingComment(precedingNode.stmnt.value, comment);
     return true;
   }
   return false;
@@ -444,7 +452,7 @@ export function handleEndOfLineComment(
   return (
     handleDanglingComment(comment) ||
     handleBinaryishExpressionRightChildTrailingComment(comment) ||
-    handleIfElseBlockRightTrailingComment(comment, options) ||
+    handleBlockStatementTrailingComment(comment, options) ||
     handleBlockStatementLeadingComment(comment) ||
     handleWhereExpression(comment, sourceCode) ||
     handleModifierPrettierIgnoreComment(comment) ||

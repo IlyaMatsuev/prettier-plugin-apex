@@ -4,9 +4,48 @@
 
 ### Allow forcing curly brackets around blocks
 
-A new option `apexForceCurly` has been introduced, which allows to force curly brackets around if-else, loops and try-catch-finally blocks.
+A new option `apexForceCurly` has been introduced, which allows to force curly brackets around if-else, for and while loops.
 
-TODO: Add an example
+Input:
+
+```java
+public void method() {
+    if (true) System.debug('Hello World 1');
+    else if (true) System.debug('Hello World 2');
+    else if (true) {
+        System.debug('Hello World 3');
+    }
+    else System.debug('Hello World 4');
+
+    for (Integer i = 0; i < 5; i++) System.debug('Hello World 5');
+
+    while (true) System.debug('Hello World 6');
+}
+```
+
+Output:
+
+```java
+public void method() {
+    if (true) {
+        System.debug('Hello World 1');
+    } else if (true) {
+        System.debug('Hello World 2');
+    } else if (true) {
+        System.debug('Hello World 3');
+    } else {
+        System.debug('Hello World 4');
+    }
+
+    for (Integer i = 0; i < 5; i++) {
+        System.debug('Hello World 5');
+    }
+
+    while (true) {
+        System.debug('Hello World 6');
+    }
+}
+```
 
 ### Improve annotations formatting
 

@@ -197,8 +197,7 @@ export const options = {
     type: "boolean",
     category: CATEGORY_APEX,
     default: false,
-    description:
-      "Force curly brackets around if/else/for/while/do-while/try/catch/finally statements.",
+    description: "Force curly brackets around if/else/for/while statements.",
   },
 };
 

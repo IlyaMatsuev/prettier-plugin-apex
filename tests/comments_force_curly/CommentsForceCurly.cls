@@ -554,6 +554,7 @@ class CommentsForceCurly {
       System.debug('World'); // Trailing Inline Conditional COmment 3
 
     if (c > 1)
+      // Trailing Inline Conditional Comment 0
       System.debug('Hi'); /* Trailing Block Conditional Comment 1 */
     else if (d > 2) {
       System.debug('Hello'); /* Trailing Block Conditional Comment 2 */
@@ -795,6 +796,28 @@ class CommentsForceCurly {
     } /* trailing block comment 1 */
   }
 
+  void whileComments() {
+    while (true); // Trailing comment 0
+
+    while (true) System.debug('Hi'); // In between inline comment 0
+
+    while (true)
+      // In between inline comment 1
+      System.debug('Hi');
+
+    while (true)
+      System.debug('Hi'); // In between inline comment 2
+
+    while (true) // In between inline comment 2
+      System.debug('Hi');
+
+    while (true)
+      /* In between block comment 1 */
+      System.debug('Hi');
+
+    while (true) /* In between block comment 1 */ System.debug('Hi');
+  }
+
   void doWhileComments() {
     do {
       System.debug('Hi');
@@ -819,6 +842,28 @@ class CommentsForceCurly {
     }
     /* In between block comment 2 */
     while (true);
+  }
+
+  void forComments() {
+    for (Integer i = 0; i < 5; i++); // Trailing comment 0
+
+    for (Integer i = 0; i < 5; i++) System.debug('Hi'); // In between inline comment 0
+
+    for (Integer i = 0; i < 5; i++)
+      // In between inline comment 1
+      System.debug('Hi');
+
+    for (Integer i = 0; i < 5; i++)
+      System.debug('Hi'); // In between inline comment 2
+
+    for (Integer i = 0; i < 5; i++) // In between inline comment 2
+      System.debug('Hi');
+
+    for (Integer i = 0; i < 5; i++)
+      /* In between block comment 1 */
+      System.debug('Hi');
+
+    for (Integer i = 0; i < 5; i++) /* In between block comment 1 */ System.debug('Hi');
   }
 
   // Some comment here
