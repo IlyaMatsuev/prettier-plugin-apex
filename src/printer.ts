@@ -197,6 +197,25 @@ function handleExpandedBlockStatement(
     : statement;
 }
 
+function handleBracesAroundStatement(
+  statement: Doc,
+  statementType: Doc,
+  options: ParserOptions,
+): Doc {
+  const parts: Doc[] = [];
+  if (statementType === APEX_TYPES.BLOCK_STATEMENT) {
+    parts.push(" ");
+    pushIfExist(parts, statement);
+  } else if (options.apexForceCurly) {
+    parts.push(" ");
+    parts.push(group(indent(["{", hardline, statement])));
+    parts.push([hardline, "}"]);
+  } else {
+    pushIfExist(parts, group(indent([hardline, statement])));
+  }
+  return parts;
+}
+
 function escapeString(text: string): string {
   // Code from https://stackoverflow.com/a/11716317/477761
   return text
@@ -1355,7 +1374,7 @@ function handleTryCatchFinallyBlock(path: AstPath, print: printFn): Doc {
   pushIfExist(parts, finallyBlockDoc, null, [
     shouldAddHardLineBeforeFinally ? hardline : " ",
   ]);
-  return concat(parts);
+  return parts;
 }
 
 function handleCatchBlock(path: AstPath, print: printFn): Doc {
@@ -1367,7 +1386,7 @@ function handleCatchBlock(path: AstPath, print: printFn): Doc {
   parts.push(")");
   parts.push(" ");
   pushIfExist(parts, path.call(print, "stmnt"));
-  return concat(parts);
+  return parts;
 }
 
 function handleFinallyBlock(path: AstPath, print: printFn): Doc {
@@ -1375,7 +1394,7 @@ function handleFinallyBlock(path: AstPath, print: printFn): Doc {
   parts.push("finally");
   parts.push(" ");
   pushIfExist(parts, path.call(print, "stmnt"));
-  return concat(parts);
+  return parts;
 }
 
 function handleVariableDeclarations(
@@ -1816,8 +1835,13 @@ function handleNewExpression(path: AstPath, print: printFn): Doc {
   return concat(parts);
 }
 
-function handleIfElseBlock(path: AstPath, print: printFn): Doc {
+function handleIfElseBlock(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
   const node = path.getValue();
+  const forceCurly = options.apexForceCurly;
   const parts: Doc[] = [];
   const ifBlockDocs: Doc[] = path.map(print, "ifBlocks");
   const elseBlockDoc: Doc = path.call(print, "elseBlock", "value");
@@ -1851,7 +1875,8 @@ function handleIfElseBlock(path: AstPath, print: printFn): Doc {
         !ifBlockContainsBlockStatement[index - 1] ||
         ifBlockContainsLeadingOwnLineComments[index] ||
         ifBlockContainsTrailingComments[index - 1];
-      if (shouldAddHardLineBeforeElseIf) {
+
+      if (shouldAddHardLineBeforeElseIf && !forceCurly) {
         parts.push(hardline);
       } else {
         parts.push(" ");
@@ -1861,7 +1886,7 @@ function handleIfElseBlock(path: AstPath, print: printFn): Doc {
     // We also need to handle the last if block, since it might need to add
     // either a space or a hardline before the else block
     if (index === ifBlockDocs.length - 1 && elseBlockDoc) {
-      if (ifBlockContainsBlockStatement[index]) {
+      if (ifBlockContainsBlockStatement[index] || forceCurly) {
         parts.push(" ");
       } else {
         parts.push(hardline);
@@ -1883,6 +1908,7 @@ function handleIfElseBlock(path: AstPath, print: printFn): Doc {
       !lastIfBlockHardLineInserted &&
       (elseBlockContainsLeadingOwnLineComments ||
         lastIfBlockContainsTrailingComments);
+
     if (shouldAddHardLineBeforeElse) {
       parts.push(hardline);
     }
@@ -1891,7 +1917,11 @@ function handleIfElseBlock(path: AstPath, print: printFn): Doc {
   return groupConcat(parts);
 }
 
-function handleIfBlock(path: AstPath, print: printFn): Doc {
+function handleIfBlock(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
   const node: EnrichedIfBlock = path.getNode();
   const statementType: Doc = path.call(print, "stmnt", "@class");
   const statementDoc: Doc = path.call(print, "stmnt");
@@ -1912,29 +1942,23 @@ function handleIfBlock(path: AstPath, print: printFn): Doc {
   conditionParts.push(")");
   parts.push(groupIndentConcat(conditionParts));
   // Body block
-  if (statementType === APEX_TYPES.BLOCK_STATEMENT) {
-    parts.push(" ");
-    pushIfExist(parts, statementDoc);
-  } else {
-    pushIfExist(parts, group(indent(concat([hardline, statementDoc]))));
-  }
-  return concat(parts);
+  parts.push(handleBracesAroundStatement(statementDoc, statementType, options));
+  return parts;
 }
 
-function handleElseBlock(path: AstPath, print: printFn): Doc {
+function handleElseBlock(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
   const statementType: Doc = path.call(print, "stmnt", "@class");
   const statementDoc: Doc = path.call(print, "stmnt");
 
   const parts: Doc[] = [];
   parts.push("else");
   // Body block
-  if (statementType === APEX_TYPES.BLOCK_STATEMENT) {
-    parts.push(" ");
-    pushIfExist(parts, statementDoc);
-  } else {
-    pushIfExist(parts, group(indent(concat([hardline, statementDoc]))));
-  }
-  return concat(parts);
+  parts.push(handleBracesAroundStatement(statementDoc, statementType, options));
+  return parts;
 }
 
 function handleTernaryExpression(path: AstPath, print: printFn): Doc {
@@ -2925,7 +2949,11 @@ function handlePrefixOperator(path: AstPath): Doc {
   return PREFIX[node.$];
 }
 
-function handleWhileLoop(path: AstPath, print: printFn): Doc {
+function handleWhileLoop(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
   const node = path.getValue();
   const conditionDoc: Doc = path.call(print, "condition");
 
@@ -2938,18 +2966,17 @@ function handleWhileLoop(path: AstPath, print: printFn): Doc {
   parts.push(")");
   if (!node.stmnt.value) {
     parts.push(";");
-    return concat(parts);
+    return parts;
   }
   // Body
-  const statementDoc: Doc = path.call(print, "stmnt", "value");
-  const statementType: Doc = path.call(print, "stmnt", "value", "@class");
-  if (statementType === APEX_TYPES.BLOCK_STATEMENT) {
-    parts.push(" ");
-    pushIfExist(parts, statementDoc);
-  } else {
-    pushIfExist(parts, group(indent(concat([hardline, statementDoc]))));
-  }
-  return concat(parts);
+  parts.push(
+    handleBracesAroundStatement(
+      path.call(print, "stmnt", "value"),
+      path.call(print, "stmnt", "value", "@class"),
+      options,
+    ),
+  );
+  return parts;
 }
 
 function handleDoLoop(path: AstPath, print: printFn): Doc {
@@ -2969,10 +2996,14 @@ function handleDoLoop(path: AstPath, print: printFn): Doc {
   parts.push(groupIndentConcat([softline, conditionDoc, dedent(softline)]));
   parts.push(")");
   parts.push(";");
-  return concat(parts);
+  return parts;
 }
 
-function handleForLoop(path: AstPath, print: printFn): Doc {
+function handleForLoop(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
   const node = path.getValue();
   const forControlDoc: Doc = path.call(print, "forControl");
 
@@ -3021,18 +3052,17 @@ function handleForLoop(path: AstPath, print: printFn): Doc {
   parts.push(")");
   if (!node.stmnt.value) {
     parts.push(";");
-    return concat(parts);
+    return parts;
   }
   // Body
-  const statementType: Doc = path.call(print, "stmnt", "value", "@class");
-  const statementDoc: Doc = path.call(print, "stmnt", "value");
-  if (statementType === APEX_TYPES.BLOCK_STATEMENT) {
-    parts.push(" ");
-    pushIfExist(parts, statementDoc);
-  } else {
-    pushIfExist(parts, group(indent(concat([hardline, statementDoc]))));
-  }
-  return concat(parts);
+  parts.push(
+    handleBracesAroundStatement(
+      path.call(print, "stmnt", "value"),
+      path.call(print, "stmnt", "value", "@class"),
+      options,
+    ),
+  );
+  return parts;
 }
 
 function handleForEnhancedControl(path: AstPath, print: printFn): Doc {

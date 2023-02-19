@@ -307,6 +307,48 @@ function handleBinaryishExpressionRightChildTrailingComment(
 }
 
 /**
+ * In a if/else/for/while block, if there is an end of line comment for the inner statement, we want to
+ * attach it to that statement on the right. This doesn't work by default if we force adding curly braces around the block.
+ * So this method does it instead.
+ */
+function handleBlockStatementTrailingComment(
+  comment: AnnotatedComment,
+  options: ParserOptions,
+) {
+  const { precedingNode } = comment;
+  if (
+    !options.apexForceCurly ||
+    comment.placement !== "endOfLine" ||
+    !precedingNode
+  ) {
+    return false;
+  }
+  if (
+    precedingNode["@class"] === apexTypes.IF_BLOCK ||
+    precedingNode["@class"] === apexTypes.ELSE_BLOCK
+  ) {
+    addTrailingComment(precedingNode.stmnt, comment);
+    return true;
+  }
+  if (precedingNode["@class"] === apexTypes.IF_ELSE_BLOCK) {
+    const commentLeftStatement =
+      precedingNode.elseBlock?.value?.stmnt ??
+      precedingNode.ifBlocks[precedingNode.ifBlocks.length - 1].stmnt;
+    addTrailingComment(commentLeftStatement, comment);
+    return true;
+  }
+  if (
+    (precedingNode["@class"] === apexTypes.WHILE_LOOP ||
+      precedingNode["@class"] === apexTypes.FOR_LOOP) &&
+    precedingNode.stmnt?.value
+  ) {
+    addTrailingComment(precedingNode.stmnt.value, comment);
+    return true;
+  }
+  return false;
+}
+
+/**
  * Turn the leading comment in a long method or variable chain into the preceding
  * comment of a previous node. Without doing that, we have an awkward position
  * for the . character like so:
@@ -397,6 +439,7 @@ export function handleOwnLineComment(
  *
  * @param comment The comment node.
  * @param sourceCode The entire source code.
+ * @param options The prettier options.
  * @returns {boolean} Whether we have manually attached this comment to some AST
  * node. If `true` is returned, Prettier will no longer try to attach this
  * comment based on its internal heuristic.
@@ -404,10 +447,12 @@ export function handleOwnLineComment(
 export function handleEndOfLineComment(
   comment: AnnotatedComment,
   sourceCode: string,
+  options: ParserOptions,
 ): boolean {
   return (
     handleDanglingComment(comment) ||
     handleBinaryishExpressionRightChildTrailingComment(comment) ||
+    handleBlockStatementTrailingComment(comment, options) ||
     handleBlockStatementLeadingComment(comment) ||
     handleWhereExpression(comment, sourceCode) ||
     handleModifierPrettierIgnoreComment(comment) ||
