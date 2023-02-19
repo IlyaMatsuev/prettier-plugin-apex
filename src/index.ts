@@ -130,28 +130,40 @@ export const options = {
     category: CATEGORY_APEX,
     default: false,
     description:
-      "Format Apex annotations to the upper camel case. Also converts `testmethod` modifier to `@IsTest`",
+      "Format Apex annotations to the upper camel case; format annotation arguments to lower camel case; add spaces between annotation arguments; convert `testmethod` modifier to `@IsTest` annotation",
   },
   apexFormatStandardTypes: {
     type: "boolean",
     category: CATEGORY_APEX,
     default: false,
     description:
-      "Format the most popular Apex standard types. For example: `System`, `Map`, `DateTime`, `SObject` etc.",
+      "Format the most popular Apex standard types for definitions (does not work for chained method calls). For example: `System`, `Map`, `DateTime`, `SObject` etc.",
   },
   apexFormatInlineComments: {
-    type: "boolean",
+    type: "choice",
     category: CATEGORY_APEX,
-    default: false,
-    description:
-      "Formats the inline comments to have a space and start from a capital letter.",
-  },
-  apexAnnotationsArgsSpacing: {
-    type: "boolean",
-    category: CATEGORY_APEX,
-    default: false,
-    description:
-      "Add spaces between an annotation argument and value. For example: `@Future(callout = true)",
+    default: "none",
+    choices: [
+      {
+        value: "none",
+        description: "Do not apply any formatting to the inline comments.",
+      },
+      {
+        value: "spaced",
+        description: "Add a whitespace after the '//' in inline comment.",
+      },
+      {
+        value: "trimed",
+        description:
+          "Same as `spaced` but also remove all trailing whitespaces before and after the comment. Be aware that this will not work great with the commented-out code snippets.",
+      },
+      {
+        value: "strict",
+        description:
+          "Same as `trimed` but also make the first comment letter uppercase. Be aware that this will not work great with the commented-out code snippets.",
+      },
+    ],
+    description: "Formats the inline comments to be more readable.",
   },
   apexEmptyBlockBracketLine: {
     type: "boolean",
@@ -180,6 +192,12 @@ export const options = {
     default: false,
     description:
       "Sort class member modifiers in the certain order. For fields: `<access> static final transient`, for methods: `<access> static/override virtual/abstract`.",
+  },
+  apexForceCurly: {
+    type: "boolean",
+    category: CATEGORY_APEX,
+    default: false,
+    description: "Force curly brackets around if/else/for/while statements.",
   },
 };
 

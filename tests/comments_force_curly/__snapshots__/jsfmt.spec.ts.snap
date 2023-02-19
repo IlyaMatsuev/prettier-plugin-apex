@@ -1,18 +1,18 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Format apex: CommentsFormatInline.cls: CommentsFormatInline.cls 1`] = `
-//Leading Inline Comment
+exports[`Format apex: CommentsForceCurly.cls: CommentsForceCurly.cls 1`] = `
+// Leading Inline Comment
 
-/*   leading Block Comment */ /*another Leading Block Comment      */
+/* Leading Block Comment */ /* Another Leading Block Comment */
 
 /**
  * ApexDoc for class
  */
 @isTest(
- seeAllData = true      //class annotation inline comment 1
- //isParallel = false         // class annotation inline comment 2
+ seeAllData = true // Class annotation inline comment 1
+ //isParallel = false // Class annotation inline comment 2
 )
-class Comments {
+class CommentsForceCurly {
   // Dangling class inline comment
 
   /* Dangling class block comment */
@@ -405,15 +405,15 @@ class Comments {
 
 
     a = (a == null) && (a != null) &&
-      /*block Comment 1 */
+      /* Block Comment 1 */
       (a == null) && (a <= null);
 
     a =
-      //comment
+      // Comment
       i + j;
 
     a = i
-      //comment
+      // Comment
       + j;
     a = i -
       // Comment
@@ -446,6 +446,28 @@ class Comments {
         j
       /* Comments */
       ;
+
+    if (
+      record.isNew() // end of line comment for left child in binaryish expression 1
+      || record.getMethod() != null
+    ) {
+    }
+    if (
+      record.isNew()
+      || record.getMethod() != null // end of line comment for right child in binaryish expression 1
+    ) {
+    }
+    if (
+      record.isNew() // end of line comment for left child in binaryish expression 2
+      || record.getMethod() != null // end of line comment for right child in binaryish expression 2
+    ) {
+    }
+    if (
+      record.isNew() || record.getMethod() != null // small eol
+    ) {
+    }
+    if (record.isNew() || record.getMethod() != null) { // small eol 2
+    }
   }
 
   void commentInSOQL() {
@@ -512,11 +534,11 @@ class Comments {
   }
 
   void conditionalComments() {
-    if (a > 1)
+    if (a > 1) // Trailing Inline Conditional Comment 0
       System.debug('Hi'); // Trailing Inline Conditional Comment 1
     else if (b > 2)
       System.debug('Hello'); // Trailing Inline Conditional Comment 2
-    else
+    else // Trailing Inline Conditional Comment 03
       System.debug('World'); // Trailing Inline Conditional COmment 3
 
     if (a > 1) {
@@ -527,10 +549,19 @@ class Comments {
       System.debug('World'); // Trailing Inline Conditional COmment 3
     }
 
+    if (a > 1) { // Trailing Inline Conditional Comment 0
+      System.debug('Hi'); // Trailing Inline Conditional Comment 1
+    } else if (b > 2) {
+      System.debug('Hello'); // Trailing Inline Conditional Comment 2
+    } else
+      System.debug('World'); // Trailing Inline Conditional COmment 3
+
     if (c > 1)
+      // Trailing Inline Conditional Comment 0
       System.debug('Hi'); /* Trailing Block Conditional Comment 1 */
-    else if (d > 2)
+    else if (d > 2) {
       System.debug('Hello'); /* Trailing Block Conditional Comment 2 */
+    } /* Trailing Block Conditional Comment 03 */
     else
       System.debug('World'); /* Trailing Block Conditional COmment 3 */
 
@@ -558,7 +589,7 @@ class Comments {
     else {
     }
 
-    if (true) {
+    if (true) {// In between Inline Comment 5
     }
     // In between Inline Comment 5
     else {
@@ -568,29 +599,77 @@ class Comments {
     if (a > 1) {
       System.debug('Hi');
     }
-    /*in between Block Comment 1 */
+    /* In between Block Comment 1 */
     else if (b > 2) {
-      // One more comment
       System.debug('Hello');
     }
-    /*  in between Block Comment 2 */
+    /* In between Block Comment 2 */
     else if (c > 3) {
     }
-    /*in between Block Comment 3 */
+    /* In between Block Comment 3 */
     else if (d > 3) System.debug('World');
     /* In between Block Comment 4 */
     else {
-      // Some other comment here
     }
 
     if (true) {
     }
-    /*
-                       In between Block Comment 5
-    */
+    /* In between Block Comment 5 */
     else {
       System.debug('Hello');
     }
+
+    if (true)
+      System.debug('Hello');
+    /* In between Block Comment 5 */
+    else
+      System.debug('Hello');
+  }
+
+  void specialInBetweenConditionalComments() {
+    if (foo) {
+      System.debug('foo');
+    }
+    // foo own line in between comment 1
+    else if (bar) {
+      System.debug('bar');
+    }
+    // bar own line in between comment 1
+    else {
+      System.debug('baz');
+    }
+
+    if (foo) {
+      System.debug('foo');
+    } // foo trailing inline comment 2
+    else if (bar) {
+      System.debug('bar');
+    } // bar trailing inline comment 2
+    else {
+      System.debug('baz');
+    } // baz trailing inline comment 2
+
+    if (foo) {
+      System.debug('foo');
+    }
+    /* foo block in between comment 3 */
+    else if (bar) {
+      System.debug('bar');
+    }
+    /* bar block in between comment 3 */
+    else {
+      System.debug('baz');
+    }
+
+    if (foo) {
+      System.debug('foo');
+    } /* foo block trailing comment 4 */
+    else if (bar) {
+      System.debug('bar');
+    } /* bar block trailing comment 4 */
+    else {
+      System.debug('baz');
+    } /* baz block trailing comment 4 */
   }
 
   void ternaryComments() {
@@ -625,7 +704,7 @@ class Comments {
 
     System.debug(
       /*
-       *Leading Block Comment 3 for Ternary Expressions
+       * Leading Block Comment 3 for Ternary Expressions
        */
       condition ? 1 : 0
     );
@@ -660,27 +739,18 @@ class Comments {
     }
     // In between inline comment 2
     finally {
-      // Some other comment here
+
     }
 
     try {
       System.debug('Hi');
-    }
+    } // In between inline trailing comment 1
     catch (Exception ex) {
-      // In between inline comment 1
-    }
+
+    } // In between inline trailing comment 1
     finally {
-      // In between inline comment 2
-    }
 
-    try {
-      System.debug('Hi');
-    }
-    // In between inline comment 1
-    catch (Exception ex) {
-    } finally {   // Some other comment here
-      // In between inline comment 2
-    }
+    } // finally trailing comment 1
 
     try {
       System.debug('Hi');
@@ -717,57 +787,154 @@ class Comments {
     finally {
       System.debug('World');
     }
+
+    try {
+      System.debug('Hi');
+    } /* In between trailing block comment 3 */
+    catch (Exception ex) {
+      System.debug('Hello');
+    } /* In between trailing block comment 4 */
+    finally {
+      System.debug('World');
+    } /* trailing block comment 1 */
+  }
+
+  void whileComments() {
+    while (true); // Trailing comment 0
+
+    while (true) System.debug('Hi'); // In between inline comment 0
+
+    while (true)
+      // In between inline comment 1
+      System.debug('Hi');
+
+    while (true)
+      System.debug('Hi'); // In between inline comment 2
+
+    while (true) // In between inline comment 2
+      System.debug('Hi');
+
+    while (true)
+      /* In between block comment 1 */
+      System.debug('Hi');
+
+    while (true) /* In between block comment 1 */ System.debug('Hi');
   }
 
   void doWhileComments() {
     do {
       System.debug('Hi');
     }
-    //in between inline comment 1
+    // In between inline comment 1
     while (true);
 
     do {
       System.debug('Hi');
     }
-    //in between inline comment 2
+    // In between inline comment 2
     while (true);
 
     do {
       System.debug('Hi');
     }
-    /*        In between block comment 1  */     
+    /* In between block comment 1 */
     while (true);
 
     do {
       System.debug('Hi');
     }
-    /* in between block comment 2 */
+    /* In between block comment 2 */
     while (true);
   }
 
-  @isTest //decorator Trailing Inline Comment 1
-  void trailingCommentAfterMethodName() {
+  void forComments() {
+    for (Integer i = 0; i < 5; i++); // Trailing comment 0
+
+    for (Integer i = 0; i < 5; i++) System.debug('Hi'); // In between inline comment 0
+
+    for (Integer i = 0; i < 5; i++)
+      // In between inline comment 1
+      System.debug('Hi');
+
+    for (Integer i = 0; i < 5; i++)
+      System.debug('Hi'); // In between inline comment 2
+
+    for (Integer i = 0; i < 5; i++) // In between inline comment 2
+      System.debug('Hi');
+
+    for (Integer i = 0; i < 5; i++)
+      /* In between block comment 1 */
+      System.debug('Hi');
+
+    for (Integer i = 0; i < 5; i++) /* In between block comment 1 */ System.debug('Hi');
+  }
+
+  // Some comment here
+  @isTest(seeAllData = true)
+  // Dangling comment
+  public static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  /*decorator Leading Block Comment 1 */ @isTest
+  @isTest(seeAllData = true)
+  /* Dangling comment */
+  public static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  @isTest(seeAllData = true)
+  /* 
+    Dangling comment 
+  */
+  // Comment
+  public static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  @isTest // Decorator Trailing Inline Comment 1
+  static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  // Some comment here
+  @isTest // Decorator Trailing Inline Comment 1
+  static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  @isTest // Decorator Trailing Inline Comment 1
+  static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  @isTest // Decorator Trailing Inline Comment 1
+  testmethod static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  /* Decorator Leading Block Comment 1 */ @isTest
   void leadingCommentBeforeAnnotation() {
     System.debug('Hi');
   }
 
-  @isTest //decorator Trailing Inline Comment 2
+  @isTest // Decorator Trailing Inline Comment 2
   @AuraEnabled // Decorater Trailing Inline Comment 3
-  void trailingCommentAfterMethodName() {
+  static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  @isTest /*Decorator Trailing Block Comment 1 */
-  void trailingCommentAfterMethodName() {
+  @isTest /* Decorator Trailing Block Comment 1 */
+  static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  /*Decorator Leading Block Comment 1 */ @isTest
-  void trailingCommentAfterMethodName() {
+  @isTest /* Decorator Trailing Block Comment 1 */
+  static testmethod void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  /* Decorator Leading Block Comment 1 */ @isTest
+  static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
@@ -775,7 +942,7 @@ class Comments {
     seeAllData = true // Method annotation inline comment 1
     //isParallel = false // Method annotation inline comment 2
   )
-  void methodAnnotationInlineComment() {
+  testmethod void methodAnnotationInlineComment() {
   }
 
   @isTest(
@@ -785,22 +952,22 @@ class Comments {
   void methodAnnotationBlockComment() {
   }
 }
-//  Trailing Inline Comment
+// Trailing Inline Comment
 
-/*Trailing Block Comment   */
+/* Trailing Block Comment */
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//Leading Inline Comment
+// Leading Inline Comment
 
-/*   leading Block Comment */ /*another Leading Block Comment      */
+/* Leading Block Comment */ /* Another Leading Block Comment */
 
 /**
  * ApexDoc for class
  */
 @isTest(
-  seeAllData=true //class annotation inline comment 1
-  //isParallel = false         // class annotation inline comment 2
+  seeAllData=true // Class annotation inline comment 1
+  //isParallel = false // Class annotation inline comment 2
 )
-class Comments {
+class CommentsForceCurly {
   // Dangling class inline comment
 
   /* Dangling class block comment */
@@ -1193,17 +1360,17 @@ class Comments {
     a =
       (a == null) &&
       (a != null) &&
-      /*block Comment 1 */
+      /* Block Comment 1 */
       (a == null) &&
       (a <= null);
 
     a =
-      //comment
+      // Comment
       i + j;
 
     a =
       i +
-      //comment
+      // Comment
       j;
     a =
       i -
@@ -1236,6 +1403,30 @@ class Comments {
       /* Comments */
       i | j;
     /* Comments */
+
+    if (
+      record.isNew() || // end of line comment for left child in binaryish expression 1
+      record.getMethod() != null
+    ) {
+    }
+    if (
+      record.isNew() ||
+      record.getMethod() != null // end of line comment for right child in binaryish expression 1
+    ) {
+    }
+    if (
+      record.isNew() || // end of line comment for left child in binaryish expression 2
+      record.getMethod() != null // end of line comment for right child in binaryish expression 2
+    ) {
+    }
+    if (
+      record.isNew() ||
+      record.getMethod() != null // small eol
+    ) {
+    }
+    if (record.isNew() || record.getMethod() != null) {
+      // small eol 2
+    }
   }
 
   void commentInSOQL() {
@@ -1305,12 +1496,17 @@ class Comments {
   }
 
   void conditionalComments() {
-    if (a > 1)
+    if (
+      a >
+      1 // Trailing Inline Conditional Comment 0
+    ) {
       System.debug('Hi'); // Trailing Inline Conditional Comment 1
-    else if (b > 2)
+    } else if (b > 2) {
       System.debug('Hello'); // Trailing Inline Conditional Comment 2
-    else
+    } else {
+      // Trailing Inline Conditional Comment 03
       System.debug('World'); // Trailing Inline Conditional COmment 3
+    }
 
     if (a > 1) {
       System.debug('Hi'); // Trailing Inline Conditional Comment 1
@@ -1320,12 +1516,23 @@ class Comments {
       System.debug('World'); // Trailing Inline Conditional COmment 3
     }
 
-    if (c > 1)
+    if (a > 1) {
+      // Trailing Inline Conditional Comment 0
+      System.debug('Hi'); // Trailing Inline Conditional Comment 1
+    } else if (b > 2) {
+      System.debug('Hello'); // Trailing Inline Conditional Comment 2
+    } else {
+      System.debug('World'); // Trailing Inline Conditional COmment 3
+    }
+
+    if (c > 1) {
+      // Trailing Inline Conditional Comment 0
       System.debug('Hi'); /* Trailing Block Conditional Comment 1 */
-    else if (d > 2)
+    } else if (d > 2) {
       System.debug('Hello'); /* Trailing Block Conditional Comment 2 */
-    else
+    } /* Trailing Block Conditional Comment 03 */ else {
       System.debug('World'); /* Trailing Block Conditional COmment 3 */
+    }
 
     if (c > 1) {
       System.debug('Hi'); /* Trailing Block Conditional Comment 1 */
@@ -1337,22 +1544,21 @@ class Comments {
 
     if (a > 1) {
       System.debug('Hi');
-    }
-    // In between Inline Comment 1
+    } // In between Inline Comment 1
     else if (b > 2) {
       System.debug('Hello');
-    }
-    // In between Inline Comment 2
+    } // In between Inline Comment 2
     else if (c > 3) {
-    }
-    // In between Inline Comment 3
-    else if (d > 3)
+    } // In between Inline Comment 3
+    else if (d > 3) {
       System.debug('World');
+    }
     // In between Inline Comment 4
     else {
     }
 
     if (true) {
+      // In between Inline Comment 5
     }
     // In between Inline Comment 5
     else {
@@ -1361,31 +1567,73 @@ class Comments {
 
     if (a > 1) {
       System.debug('Hi');
-    }
-    /*in between Block Comment 1 */
+    } /* In between Block Comment 1 */
     else if (b > 2) {
-      // One more comment
       System.debug('Hello');
-    }
-    /*  in between Block Comment 2 */
+    } /* In between Block Comment 2 */
     else if (c > 3) {
-    }
-    /*in between Block Comment 3 */
-    else if (d > 3)
+    } /* In between Block Comment 3 */
+    else if (d > 3) {
       System.debug('World');
+    }
     /* In between Block Comment 4 */
     else {
-      // Some other comment here
     }
 
     if (true) {
     }
-    /*
-                       In between Block Comment 5
-    */
+    /* In between Block Comment 5 */
     else {
       System.debug('Hello');
     }
+
+    if (true) {
+      System.debug('Hello');
+    }
+    /* In between Block Comment 5 */
+    else {
+      System.debug('Hello');
+    }
+  }
+
+  void specialInBetweenConditionalComments() {
+    if (foo) {
+      System.debug('foo');
+    } // foo own line in between comment 1
+    else if (bar) {
+      System.debug('bar');
+    }
+    // bar own line in between comment 1
+    else {
+      System.debug('baz');
+    }
+
+    if (foo) {
+      System.debug('foo');
+    } else if (bar) { // foo trailing inline comment 2
+      System.debug('bar');
+    } else { // bar trailing inline comment 2
+      System.debug('baz');
+    } // baz trailing inline comment 2
+
+    if (foo) {
+      System.debug('foo');
+    } /* foo block in between comment 3 */
+    else if (bar) {
+      System.debug('bar');
+    }
+    /* bar block in between comment 3 */
+    else {
+      System.debug('baz');
+    }
+
+    if (foo) {
+      System.debug('foo');
+    } /* foo block trailing comment 4 */ else if (bar) {
+      System.debug('bar');
+    } /* bar block trailing comment 4 */ else {
+      System.debug('baz');
+    } /* baz block trailing comment 4 */
   }
 
   void ternaryComments() {
@@ -1420,7 +1668,7 @@ class Comments {
 
     System.debug(
       /*
-       *Leading Block Comment 3 for Ternary Expressions
+       * Leading Block Comment 3 for Ternary Expressions
        */
       condition ? 1 : 0
     );
@@ -1454,26 +1702,15 @@ class Comments {
     }
     // In between inline comment 2
     finally {
-      // Some other comment here
     }
 
     try {
       System.debug('Hi');
-    } catch (Exception ex) {
-      // In between inline comment 1
-    } finally {
-      // In between inline comment 2
-    }
-
-    try {
-      System.debug('Hi');
-    }
-    // In between inline comment 1
+    } // In between inline trailing comment 1
     catch (Exception ex) {
-    } finally {
-      // Some other comment here
-      // In between inline comment 2
-    }
+    } // In between inline trailing comment 1
+    finally {
+    } // finally trailing comment 1
 
     try {
       System.debug('Hi');
@@ -1508,61 +1745,180 @@ class Comments {
     finally {
       System.debug('World');
     }
+
+    try {
+      System.debug('Hi');
+    } /* In between trailing block comment 3 */
+    catch (Exception ex) {
+      System.debug('Hello');
+    } /* In between trailing block comment 4 */
+    finally {
+      System.debug('World');
+    } /* trailing block comment 1 */
+  }
+
+  void whileComments() {
+    while (true); // Trailing comment 0
+
+    while (true) {
+      System.debug('Hi'); // In between inline comment 0
+    }
+
+    while (true) {
+      // In between inline comment 1
+      System.debug('Hi');
+    }
+
+    while (true) {
+      System.debug('Hi'); // In between inline comment 2
+    }
+
+    while (
+      true // In between inline comment 2
+    ) {
+      System.debug('Hi');
+    }
+
+    while (true) {
+      /* In between block comment 1 */
+      System.debug('Hi');
+    }
+
+    while (true) {
+      /* In between block comment 1 */ System.debug('Hi');
+    }
   }
 
   void doWhileComments() {
     do {
       System.debug('Hi');
     } while (
-      //in between inline comment 1
+      // In between inline comment 1
       true
     );
 
     do {
       System.debug('Hi');
     } while (
-      //in between inline comment 2
+      // In between inline comment 2
       true
     );
 
     do {
       System.debug('Hi');
     } while (
-      /*        In between block comment 1  */
+      /* In between block comment 1 */
       true
     );
 
     do {
       System.debug('Hi');
     } while (
-      /* in between block comment 2 */
+      /* In between block comment 2 */
       true
     );
   }
 
-  @isTest //decorator Trailing Inline Comment 1
-  void trailingCommentAfterMethodName() {
+  void forComments() {
+    for (Integer i = 0; i < 5; i++); // Trailing comment 0
+
+    for (Integer i = 0; i < 5; i++) {
+      System.debug('Hi'); // In between inline comment 0
+    }
+
+    for (Integer i = 0; i < 5; i++) {
+      // In between inline comment 1
+      System.debug('Hi');
+    }
+
+    for (Integer i = 0; i < 5; i++) {
+      System.debug('Hi'); // In between inline comment 2
+    }
+
+    for (
+      Integer i = 0;
+      i < 5;
+      i++ // In between inline comment 2
+    ) {
+      System.debug('Hi');
+    }
+
+    for (Integer i = 0; i < 5; i++) {
+      /* In between block comment 1 */
+      System.debug('Hi');
+    }
+
+    for (Integer i = 0; i < 5; i++) {
+      /* In between block comment 1 */ System.debug('Hi');
+    }
+  }
+
+  // Some comment here
+  @isTest(seeAllData=true)
+  // Dangling comment
+  public static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  /*decorator Leading Block Comment 1 */ @isTest
+  @isTest(seeAllData=true)
+  /* Dangling comment */
+  public static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  @isTest(seeAllData=true)
+  /* 
+    Dangling comment 
+  */
+  // Comment
+  public static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  @isTest // Decorator Trailing Inline Comment 1
+  static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  // Some comment here
+  @isTest // Decorator Trailing Inline Comment 1
+  static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  @isTest // Decorator Trailing Inline Comment 1
+  static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  @isTest // Decorator Trailing Inline Comment 1
+  testmethod static void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  /* Decorator Leading Block Comment 1 */ @isTest
   void leadingCommentBeforeAnnotation() {
     System.debug('Hi');
   }
 
-  @isTest //decorator Trailing Inline Comment 2
+  @isTest // Decorator Trailing Inline Comment 2
   @AuraEnabled // Decorater Trailing Inline Comment 3
-  void trailingCommentAfterMethodName() {
+  static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  @isTest /*Decorator Trailing Block Comment 1 */
-  void trailingCommentAfterMethodName() {
+  @isTest /* Decorator Trailing Block Comment 1 */
+  static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
-  /*Decorator Leading Block Comment 1 */ @isTest
-  void trailingCommentAfterMethodName() {
+  @isTest /* Decorator Trailing Block Comment 1 */
+  static testmethod void trailingCommentAfterMethodName() {
+    System.debug('Hi');
+  }
+
+  /* Decorator Leading Block Comment 1 */ @isTest
+  static void trailingCommentAfterMethodName() {
     System.debug('Hi');
   }
 
@@ -1570,7 +1926,7 @@ class Comments {
     seeAllData=true // Method annotation inline comment 1
     //isParallel = false // Method annotation inline comment 2
   )
-  void methodAnnotationInlineComment() {
+  testmethod void methodAnnotationInlineComment() {
   }
 
   @isTest(
@@ -1580,8 +1936,8 @@ class Comments {
   void methodAnnotationBlockComment() {
   }
 }
-//  Trailing Inline Comment
+// Trailing Inline Comment
 
-/*Trailing Block Comment   */
+/* Trailing Block Comment */
 
 `;

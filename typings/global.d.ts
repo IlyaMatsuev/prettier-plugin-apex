@@ -3,18 +3,18 @@ import prettier from "prettier";
 
 declare module "prettier" {
   interface RequiredOptions {
-    apexStandaloneParser: string;
+    apexStandaloneParser: "none" | "built-in";
     apexStandalonePort: number;
     apexStandaloneHost: string;
     apexInsertFinalNewline: boolean;
     apexFormatAnnotations: boolean;
     apexFormatStandardTypes: boolean;
-    apexFormatInlineComments: boolean;
-    apexAnnotationsArgsSpacing: boolean;
+    apexFormatInlineComments: "none" | "spaced" | "trimed" | "strict";
     apexEmptyBlockBracketLine: boolean;
     apexExpandOneLineProperties: boolean;
     apexExplicitAccessModifier: boolean;
     apexSortModifiers: boolean;
+    apexForceCurly: boolean;
   }
   namespace __debug {
     // eslint-disable-next-line import/prefer-default-export

@@ -5,7 +5,7 @@ exports[`Format apex: AnnotatedParamSpacing.cls: AnnotatedParamSpacing.cls 1`] =
 {}
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-@IsTest(SeeAllData = false)
+@IsTest(seeAllData = false)
 class AnnotatedParamSpacing {
 }
 

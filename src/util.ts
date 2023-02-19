@@ -9,6 +9,7 @@ import {
   APEX_TYPES as apexTypes,
   STANDARD_APEX_ANNOTATIONS,
   STANDARD_APEX_TYPES,
+  STANDARD_APEX_ANNOTATION_ARG_NAMES,
 } from "./constants";
 
 export type SerializedAst = {
@@ -66,12 +67,38 @@ export function isApexDocComment(comment: jorje.BlockComment): boolean {
 }
 
 /**
+ * Check if this comment is an inline comment.
+ * @param comment the comment to check.
+ */
+export function isInlineComment(comment: string): boolean {
+  const inlineCommentPrefix = "//";
+  return (
+    comment.startsWith(inlineCommentPrefix) &&
+    comment.length > inlineCommentPrefix.length
+  );
+}
+
+/**
  * Check if the file is a trigger source by the provided file path
  * @param filePath The absolute or relative file path
  * @returns true if the source file is for Salesforce trigger
  */
 export function isTriggerSource(filePath: string): boolean {
   return filePath.endsWith(".trigger");
+}
+
+/**
+ * Check if the block text has an extra new line in it
+ * @param blockText The block text content
+ * @returns true if there is more than 1 new line in the block
+ */
+export function doesBlockHaveExtraNewLine(blockText: string): boolean {
+  const openBraceIndex = blockText.indexOf("{");
+  if (openBraceIndex === -1) {
+    return false;
+  }
+  const blockTextOnly = blockText.substring(openBraceIndex);
+  return /^{(\s*\n){2,}\s*[^\s}]/.test(blockTextOnly);
 }
 
 export function checkIfParentIsDottedExpression(path: AstPath): boolean {
@@ -300,6 +327,10 @@ export function uncapitalize(input: Doc = ""): Doc {
 
 export function normalizeAnnotationName(name: Doc): Doc {
   return normalizeName(name, STANDARD_APEX_ANNOTATIONS);
+}
+
+export function normalizeAnnotationArgName(name: Doc): Doc {
+  return normalizeName(name, STANDARD_APEX_ANNOTATION_ARG_NAMES);
 }
 
 export function normalizeTypeName(name: Doc): Doc {

@@ -1,4 +1,4 @@
 runSpec(__dirname, ["apex"], {
-  apexFormatAnnotations: true,
+  apexForceCurly: true,
   astCompareDisabled: true,
 });

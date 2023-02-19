@@ -1,3 +1,150 @@
+# 2.2.0
+
+## Formatting Changes
+
+### Allow forcing curly brackets around blocks
+
+A new option `apexForceCurly` has been introduced, which allows to force curly brackets around if-else, for and while loops.
+
+Input:
+
+```java
+public void method() {
+    if (true) System.debug('Hello World 1');
+    else if (true) System.debug('Hello World 2');
+    else if (true) {
+        System.debug('Hello World 3');
+    }
+    else System.debug('Hello World 4');
+
+    for (Integer i = 0; i < 5; i++) System.debug('Hello World 5');
+
+    while (true) System.debug('Hello World 6');
+}
+```
+
+Output:
+
+```java
+public void method() {
+    if (true) {
+        System.debug('Hello World 1');
+    } else if (true) {
+        System.debug('Hello World 2');
+    } else if (true) {
+        System.debug('Hello World 3');
+    } else {
+        System.debug('Hello World 4');
+    }
+
+    for (Integer i = 0; i < 5; i++) {
+        System.debug('Hello World 5');
+    }
+
+    while (true) {
+        System.debug('Hello World 6');
+    }
+}
+```
+
+### Improve annotations formatting
+
+Since now, the `apexFormatAnnotations` option will also format annotation arguments to lower camel case, adding spaces between arguments.
+
+Input:
+
+```java
+@istest(isparallel=true)
+public static void method() {
+}
+```
+
+Output:
+
+```java
+@IsTest(isParallel = true)
+public static void method() {
+}
+```
+
+### Allow an extra line break in the beginning of the class/interface declaration
+
+It's possible now to have an additional line break in the begginning of a class body to improve the readability. But it's not forced. Meaning that if it was not added in the source code, it will not be added by Prettier.
+
+Input:
+
+```java
+class Test {
+
+
+    private class InnerTest {
+        public Integer q;
+    }
+
+    private class InnerTest2 {
+
+        public Integer q;
+    }
+}
+```
+
+Output:
+
+```java
+class Test {
+
+    private class InnerTest {
+        public Integer q;
+    }
+
+    private class InnerTest2 {
+
+        public Integer q;
+    }
+}
+```
+
+### Change the formatting behaviour for the `apexFormatInlineComments` option
+
+Now this option is a `choice`. Below is the input code snippet and the examples of how it could be formatted with different option values:
+
+Input:
+
+```java
+//some inline comment
+//   another inline comment
+```
+
+Output:
+
+- `none`
+
+```java
+//some inline comment
+//   another inline comment
+```
+
+- `spaced`
+
+```java
+// some inline comment
+//   another inline comment
+```
+
+- `trimed`
+
+```java
+// some inline comment
+// another inline comment
+```
+
+- `strict`
+
+```java
+// Some inline comment
+// Another inline comment
+```
+
 # 2.1.0
 
 ## Formatting Changes
