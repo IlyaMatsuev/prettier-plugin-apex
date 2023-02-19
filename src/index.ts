@@ -193,6 +193,13 @@ export const options = {
     description:
       "Sort class member modifiers in the certain order. For fields: `<access> static final transient`, for methods: `<access> static/override virtual/abstract`.",
   },
+  apexForceCurly: {
+    type: "boolean",
+    category: CATEGORY_APEX,
+    default: false,
+    description:
+      "Force curly brackets around if/else/for/while/do-while/try/catch/finally statements.",
+  },
 };
 
 export const defaultOptions = {};

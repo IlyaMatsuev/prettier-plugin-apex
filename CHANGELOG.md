@@ -2,6 +2,7 @@
 
 ## Formatting Changes
 
+- Add a new option `apexForceCurly` that allows to force curly brackets for if-else, loop, and try-catch-finally blocks [issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/14).
 - Enhance the `apexFormatAnnotations` option by merging it with the `apexAnnotationsArgsSpacing` option. The `apexAnnotationsArgsSpacing` option is not available separately anymore. If `apexFormatAnnotation` option is enabled it would also format annotation arguments to lower came case [issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/29).
 - Make the `apexFormatStandardTypes` option less powerful, removing the ability to correct chained methods calls. Now, the option will only work for types in declarations. This was made to increase reliability and make the output more predictable since it was possible that the variable name would be misinterpreted and printed uppercase, for example.
 - Allow an extra line break in the beginning of the class/interface declaration [issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/25).

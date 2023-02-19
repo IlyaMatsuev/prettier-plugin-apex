@@ -2,6 +2,12 @@
 
 ## Formatting Changes
 
+### Allow forcing curly brackets around blocks
+
+A new option `apexForceCurly` has been introduced, which allows to force curly brackets around if-else, loops and try-catch-finally blocks.
+
+TODO: Add an example
+
 ### Improve annotations formatting
 
 Since now, the `apexFormatAnnotations` option will also format annotation arguments to lower camel case, adding spaces between arguments.

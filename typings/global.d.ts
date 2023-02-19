@@ -14,6 +14,7 @@ declare module "prettier" {
     apexExpandOneLineProperties: boolean;
     apexExplicitAccessModifier: boolean;
     apexSortModifiers: boolean;
+    apexForceCurly: boolean;
   }
   namespace __debug {
     // eslint-disable-next-line import/prefer-default-export
