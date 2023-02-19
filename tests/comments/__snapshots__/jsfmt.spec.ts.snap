@@ -1629,20 +1629,6 @@ class Comments {
     // In between inline comment 2
     finally {
     }
-    // In between inline comment 1
-    catch (Exception ex) {
-    }
-    // In between inline comment 2
-    finally {
-    }
-
-    try {
-      System.debug('Hi');
-    } // In between inline trailing comment 1
-    catch (Exception ex) {
-    } // In between inline trailing comment 1
-    finally {
-    } // finally trailing comment 1
 
     try {
       System.debug('Hi');
