@@ -9,10 +9,10 @@ import {
   isInlineComment,
   isBinaryish,
 } from "./util";
+import { APEX_TYPES as apexTypes, ALLOW_DANGLING_COMMENTS } from "./constants";
 import jorje from "../vendor/apex-ast-serializer/typings/jorje";
-import * as constants from "./constants";
 
-const { concat, join, lineSuffix, hardline } = prettier.doc.builders;
+const { join, lineSuffix, hardline } = prettier.doc.builders;
 const {
   addDanglingComment,
   addLeadingComment,
@@ -20,8 +20,6 @@ const {
   hasNewlineInRange,
   skipWhitespace,
 } = prettier.util;
-
-const apexTypes = constants.APEX_TYPES;
 
 /**
  * Formats the inline comment according to the `apexFormatInlineComments` option
@@ -55,7 +53,7 @@ function formatInlineComment(
  */
 function printApexDocComment(comment: jorje.BlockComment): Doc {
   const lines = comment.value.split("\n");
-  return concat([
+  return [
     join(
       hardline,
       lines.map(
@@ -66,7 +64,7 @@ function printApexDocComment(comment: jorje.BlockComment): Doc {
             : commentLine.trimLeft()),
       ),
     ),
-  ]);
+  ];
 }
 
 export function isPrettierIgnore(comment: AnnotatedComment): boolean {
@@ -88,9 +86,8 @@ export function printComment(path: AstPath, options: ParserOptions): Doc {
   // This handles both Inline and Block Comments.
   // We don't just pass through the value because unlike other string literals,
   // this should not be escaped
-  const comment = path.getValue();
   let result;
-  const node = path.getValue();
+  const node = path.getNode();
   if (isApexDocComment(node)) {
     result = printApexDocComment(node);
   } else if (isInlineComment(node.value)) {
@@ -98,10 +95,10 @@ export function printComment(path: AstPath, options: ParserOptions): Doc {
   } else {
     result = node.value;
   }
-  if (comment.trailingEmptyLine) {
-    result = concat([result, hardline]);
+  if (node.trailingEmptyLine) {
+    result = [result, hardline];
   }
-  comment.printed = true;
+  node.printed = true;
   return result;
 }
 
@@ -110,7 +107,7 @@ export function printDanglingComment(
   options: ParserOptions,
 ): Doc {
   const sourceCode = options.originalText;
-  const comment = commentPath.getValue();
+  const comment = commentPath.getNode();
   const loc = comment.location;
   const isFirstComment = commentPath.getName() === 0;
   const parts = [];
@@ -138,7 +135,7 @@ export function printDanglingComment(
     parts.push(printComment(commentPath, options));
   }
   comment.printed = true;
-  return concat(parts);
+  return parts;
 }
 
 /**
@@ -175,7 +172,7 @@ export function isBlockComment(comment: GenericComment): boolean {
  * @returns {boolean} whether or not we will print the comment on this node manually.
  */
 export function willPrintOwnComments(path: AstPath): boolean {
-  const node = path.getValue();
+  const node = path.getNode();
   return !node || !node["@class"] || node["@class"] === apexTypes.ANNOTATION;
 }
 
@@ -187,7 +184,7 @@ function handleDanglingComment(comment: AnnotatedComment): boolean {
   const { enclosingNode } = comment;
   if (
     enclosingNode &&
-    constants.ALLOW_DANGLING_COMMENTS.indexOf(enclosingNode["@class"]) !== -1 &&
+    ALLOW_DANGLING_COMMENTS.indexOf(enclosingNode["@class"]) !== -1 &&
     ((enclosingNode.stmnts && enclosingNode.stmnts.length === 0) ||
       (enclosingNode.members && enclosingNode.members.length === 0))
   ) {
@@ -488,7 +485,7 @@ export function handleRemainingComment(
  * @returns {boolean} Whether the path should be formatted.
  */
 export function hasPrettierIgnore(path: AstPath): boolean {
-  const node = path.getValue();
+  const node = path.getNode();
   return (
     node &&
     node.comments &&

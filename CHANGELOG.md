@@ -1,3 +1,14 @@
+# 2.3.0
+
+## Formatting Changes
+
+- Add support for User Mode in Database Operations ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/738)).
+
+## Dependency Changes
+
+- Support Prettier v3 ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/673)). You cannot use this version with Prettier v2, please plan your upgrade accordingly.
+- Drop support for NodeJS < 16.19.0.
+
 # 2.2.0
 
 ## Formatting Changes
