@@ -1,7 +1,7 @@
 /* eslint no-param-reassign: 0 */
 import { AstPath, Doc } from "prettier";
-import { join } from "path";
-import { accessSync } from "fs";
+import nodePath from "path";
+import fs from "fs";
 
 import jorje from "../vendor/apex-ast-serializer/typings/jorje";
 import {
@@ -102,7 +102,7 @@ export function doesBlockHaveExtraNewLine(blockText: string): boolean {
 }
 
 export function checkIfParentIsDottedExpression(path: AstPath): boolean {
-  const node = path.getValue();
+  const node = path.getNode();
   const parentNode = path.getParentNode();
 
   let result = false;
@@ -282,7 +282,7 @@ export function getPrecedence(op: string): number {
 
 function doesFileExist(file: string): boolean {
   try {
-    accessSync(file);
+    fs.accessSync(file);
     return true;
   } catch (err) {
     return false;
@@ -293,9 +293,15 @@ function doesFileExist(file: string): boolean {
 // is being run - running using ts-node vs running after code has been compiled
 // to `dist` directory. We use this method to abstract out that difference.
 export function getSerializerBinDirectory(): string {
-  let serializerBin = join(__dirname, "../vendor/apex-ast-serializer/bin");
+  let serializerBin = nodePath.join(
+    __dirname,
+    "../vendor/apex-ast-serializer/bin",
+  );
   if (!doesFileExist(serializerBin)) {
-    serializerBin = join(__dirname, "../../vendor/apex-ast-serializer/bin");
+    serializerBin = nodePath.join(
+      __dirname,
+      "../../vendor/apex-ast-serializer/bin",
+    );
   }
   return serializerBin;
 }

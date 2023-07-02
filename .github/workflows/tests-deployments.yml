@@ -16,10 +16,9 @@ jobs:
       fail-fast: false
       matrix:
         node:
-          - "19"
+          - "20"
           - "18"
           - "16"
-          - "14"
         java:
           - "17"
           - "11"
@@ -34,7 +33,7 @@ jobs:
             ENABLE_PACKAGE_TESTS: true
     env:
       ENABLE_CODE_COVERAGE: ${{ matrix.ENABLE_CODE_COVERAGE }}
-      RUN_INTEGRATION_TESTS: ${{ matrix.ENABLE_INTEGRATION_TESTS && (github.event_name == 'schedule' || github.event_name == 'repository_dispatch' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags')) }}
+      RUN_INTEGRATION_TESTS: ${{ matrix.ENABLE_INTEGRATION_TESTS && (github.event_name == 'schedule' || github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags') || github.event_name == 'pull_request') }}
       RUN_PACKAGE_TESTS: ${{ matrix.ENABLE_PACKAGE_TESTS && (github.event_name == 'schedule' || github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch') }}
       RUN_DEPLOYMENT: ${{ matrix.ENABLE_DEPLOYMENT && startsWith(github.ref, 'refs/tags') }}
     name: Run tests on NodeJS ${{ matrix.node }} and Java ${{ matrix.java }}
@@ -70,7 +69,7 @@ jobs:
         run: yarn run wait-server
 
       - name: Run functional tests
-        run: AST_COMPARE=true yarn test -c jest.config.standalone.js
+        run: AST_COMPARE=true yarn test:standalone
 
       - name: Upload code coverage
         if: env.ENABLE_CODE_COVERAGE
@@ -79,6 +78,13 @@ jobs:
       - name: Install integration test suite dependencies
         if: env.RUN_INTEGRATION_TESTS == 'true'
         run: sudo apt-get install -y -qq parallel
+
+      # This step is needed because integration tests rely on the
+      # existence of the compiled JS, as they are run using Node
+      # instead of ts-node
+      - name: Build the project
+        if: env.RUN_INTEGRATION_TESTS == 'true'
+        run: yarn build
 
       - name: Run integration tests
         if: env.RUN_INTEGRATION_TESTS == 'true'
@@ -90,7 +96,7 @@ jobs:
 
       - name: Deploy to NPM
         if: env.RUN_DEPLOYMENT == 'true'
-        uses: JS-DevTools/npm-publish@v1
+        uses: JS-DevTools/npm-publish@v2
         with:
           token: ${{ secrets.NPM_TOKEN }}
 
@@ -106,9 +112,3 @@ jobs:
       - name: Stop Apex parsing server
         if: ${{ always() }}
         run: yarn run stop-server
-        env:
-          # Workaround for this bug from npm-publish Github Action:
-          # https://github.com/JS-DevTools/npm-publish/issues/15
-          # That Action leaves some placeholder (INPUT_TOKEN) in the .npmrc file
-          # which needs to filled in by _something_, otherwise `yarn` fails
-          INPUT_TOKEN: ''
