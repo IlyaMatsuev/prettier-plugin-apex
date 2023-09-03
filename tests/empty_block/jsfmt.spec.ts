@@ -1,1 +1,3 @@
-runSpec(__dirname, ["apex"], { apexEmptyBlockBracketLine: true });
+import { fileURLToPath } from "url";
+
+runSpec(fileURLToPath(new URL(".", import.meta.url)), ["apex"], { apexEmptyBlockBracketLine: true });

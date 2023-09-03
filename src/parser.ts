@@ -2,20 +2,19 @@
 import childProcess from "child_process";
 import path from "path";
 import prettier from "prettier";
-import fetch from "cross-fetch";
 
+import * as jorje from "../vendor/apex-ast-serializer/typings/jorje.d.js";
 import {
-  findNextUncommentedCharacter,
-  GenericComment,
-  getSerializerBinDirectory,
-  SerializedAst,
-} from "./util";
-import {
-  APEX_TYPES,
   ALLOW_TRAILING_EMPTY_LINE,
+  APEX_TYPES,
   TRAILING_EMPTY_LINE_AFTER_LAST_NODE,
-} from "./constants";
-import jorje from "../vendor/apex-ast-serializer/typings/jorje";
+} from "./constants.js";
+import {
+  GenericComment,
+  SerializedAst,
+  findNextUncommentedCharacter,
+  getSerializerBinDirectory,
+} from "./util.js";
 
 type MinimalLocation = {
   startIndex: number;
@@ -63,22 +62,26 @@ async function parseTextWithHttp(
   text: string,
   serverHost: string,
   serverPort: number,
+  serverProtocol: string,
   anonymous: boolean,
 ): Promise<string> {
   try {
-    const result = await fetch(`http://${serverHost}:${serverPort}/api/ast`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const result = await fetch(
+      `${serverProtocol}://${serverHost}:${serverPort}/api/ast`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sourceCode: text,
+          anonymous,
+          outputFormat: "json",
+          idRef: true,
+          prettyPrint: false,
+        }),
       },
-      body: JSON.stringify({
-        sourceCode: text,
-        anonymous,
-        outputFormat: "json",
-        idRef: true,
-        prettyPrint: false,
-      }),
-    });
+    );
     return await result.text();
   } catch (err: any) {
     throw new Error(
@@ -586,6 +589,7 @@ export default async function parse(
       sourceCode,
       options.apexStandaloneHost,
       options.apexStandalonePort,
+      options.apexStandaloneProtocol,
       options.parser === "apex-anonymous",
     );
   } else {

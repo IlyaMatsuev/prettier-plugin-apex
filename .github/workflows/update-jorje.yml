@@ -2,7 +2,7 @@ name: Update Jorje
 
 on:
   repository_dispatch:
-    types: jorje-update
+    types: [jorje-update]
 
 jobs:
   jorje:

@@ -1,3 +1,18 @@
+# 3.0.0
+
+Please follow [this guide](https://github.com/dangmai/prettier-plugin-apex/wiki/Upgrading-to-Prettier-Apex-v2) to upgrade Prettier Apex to this new major version.
+
+## Dependency Changes
+
+- Support Prettier v3 ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/673)). You cannot use this version with Prettier v2, please plan your upgrade accordingly.
+- Drop support for NodeJS < 18.11.0.
+
+## Internal Changes
+
+- Prettier Apex is now distributed as an ECMAScript Module. This shouldn't affect normal usage of the library, but if you are importing code from Prettier Apex you may need to change your code to adapt.
+- Allow user to customize the secret used to shut down the parsing server.
+- Allow user to specify the protocol (HTTP/HTTPS) that the parsing server uses.
+
 # 2.3.0
 
 ## Formatting Changes

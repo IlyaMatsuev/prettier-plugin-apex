@@ -1,5 +1,6 @@
-import jorje from "../vendor/apex-ast-serializer/typings/jorje";
+import type { SupportOptions } from "prettier";
 
+import * as jorje from "../vendor/apex-ast-serializer/typings/jorje.d.js";
 import {
   canAttachComment,
   handleEndOfLineComment,
@@ -9,11 +10,11 @@ import {
   isBlockComment,
   printComment,
   willPrintOwnComments,
-} from "./comments";
-import parse from "./parser";
-import { hasPragma, insertPragma } from "./pragma";
-import printFn from "./printer";
-import { massageAstNode } from "./util";
+} from "./comments.js";
+import parse from "./parser.js";
+import { hasPragma, insertPragma } from "./pragma.js";
+import printFn from "./printer.js";
+import { massageAstNode } from "./util.js";
 
 export const languages = [
   {
@@ -86,7 +87,7 @@ export const printers = {
 
 const CATEGORY_APEX = "apex";
 
-export const options = {
+export const options: SupportOptions = {
   apexStandaloneParser: {
     type: "choice",
     category: CATEGORY_APEX,
@@ -106,7 +107,7 @@ export const options = {
   },
   apexStandaloneHost: {
     type: "string",
-    category: "Global",
+    category: CATEGORY_APEX,
     default: "localhost",
     description:
       "The standalone server host to connect to. Only applicable if apexStandaloneParser is true. Default to localhost.",
@@ -117,6 +118,13 @@ export const options = {
     default: 2117,
     description:
       "The standalone server port to connect to. Only applicable if apexStandaloneParser is true. Default to 2117.",
+  },
+  apexStandaloneProtocol: {
+    type: "string",
+    category: CATEGORY_APEX,
+    default: "http",
+    description:
+      "The protocol for the standalone server. Only applicable if apexStandaloneParser is true. Default to http.",
   },
   apexInsertFinalNewline: {
     type: "boolean",

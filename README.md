@@ -13,15 +13,24 @@ It uses the excellent [Prettier](https://prettier.io/) engine for formatting, an
 
 > :warning: **NOTE:** The original project follows the [Prettier Option Philosophy](https://prettier.io/docs/en/option-philosophy.html). This fork DOES NOT follow this strategy and contains several additional configuration options that can be listed below in [the table](#configuration) or in [the changelog](/CHANGELOG.md).
 
+## ⚡️ Quick start
+
+You can automatically format Apex code in our [playground](https://apex.dangmai.net) without having to install anything.
+> The playground above does not work with additional options from this repository
+
+To integrate Prettier Apex in your workflow, please follow the [Usage](#-usage) section.
+
+## ✨ Status
+
 The purpose of this fork is to improve the original package. Although, the Prettier developers [don't want to add additional options](https://prettier.io/docs/en/option-philosophy.html) saying that this is very _opinionated_ formatter, from my _personal_ experience every company may have their own Apex coding style guidelines and some of these companies will not change their mind and prefer the style that is proposed in the original Apex prettier plugin. For exactly this case this fork has been created. Another reason is that I like an opportunity to configure how my code looks!
 
 ## Check out the new formatting options and changes in [the changelog](/CHANGELOG.md) or take a look at [the examples](/CHANGELOG.examples.md)!
 
-## Usage
+## 📖 Usage
 
 ### Requirements
 
-- Node >= 14.0.0
+- Node >= 18.11.0
 - Java Runtime Engine >= 11
 
 ### How to use
@@ -39,7 +48,7 @@ npm install --global prettier @ilyamatsuev/prettier-plugin-apex
 If you install globally, run:
 
 ```bash
-prettier --write "/path/to/project/**/*.{trigger,cls}"
+prettier --plugin=@ilyamatsuev/prettier-plugin-apex --write "/path/to/project/**/*.{trigger,cls}"
 ```
 
 If you install locally, you can add prettier as a script in `package.json`:
@@ -55,7 +64,7 @@ If you install locally, you can add prettier as a script in `package.json`:
 Then in order to run it:
 
 ```bash
-npm run prettier -- --write "/path/to/project/**/*.{trigger,cls}"
+npm run prettier -- --plugin=@ilyamatsuev/prettier-plugin-apex --write "/path/to/project/**/*.{trigger,cls}"
 ```
 
 ### Tip
@@ -69,7 +78,7 @@ You should also run Prettier with the `--debug-check` [argument](https://prettie
 For example:
 
 ```bash
-prettier --debug-check "/path/to/project/**/*.{trigger,cls}"
+prettier --plugin=@ilyamatsuev/prettier-plugin-apex --debug-check "/path/to/project/**/*.{trigger,cls}"
 ```
 
 This will guarantee that the behavior of your code will not change because of
@@ -86,7 +95,7 @@ You can also format anonymous Apex with this program by using the
 For example:
 
 ```bash
-prettier --write "/path/to/project/anonymous/**/*.cls" --parser apex-anonymous
+prettier --write "/path/to/project/anonymous/**/*.cls" --plugin=@ilyamatsuev/prettier-plugin-apex --parser apex-anonymous
 ```
 
 Note that Prettier will treat any Apex file that it finds using the glob above
@@ -128,6 +137,7 @@ This is Not Opinionated formatter, so the there are multiple configurations avai
 | `apexStandaloneParser`        | `none`      | If set to `built-in`, Prettier uses the built in standalone parser for better performance. See [Performance Tip](#performance-tips3rd-party-integration).<br>If set to `none`, Prettier invokes the CLI parser for every file.                                                                                                                   |
 | `apexStandalonePort`          | `2117`      | The port that the standalone Apex parser listens on.<br>Only applicable if `apexStandaloneParser` is `built-in`.                                                                                                                                                                                                                                 |
 | `apexStandaloneHost`          | `localhost` | The host that the standalone Apex parser listens on.<br>Only applicable if `apexStandaloneParser` is `built-in`.                                                                                                                                                                                                                                 |
+| `apexStandaloneProtocol` | `http`      | The protocol that the standalone Apex parser uses.<br>Only applicable if `apexStandaloneParser` is `built-in`.                                                                                                                  |
 | `apexInsertFinalNewline`      | `true`      | Whether a newline is added as the last thing in the output                                                                                                                                                                                                                                                                                       |
 | `apexFormatAnnotations`       | `false`     | Format Apex annotations to the upper camel case; format annotation arguments to lower camel case; add spaces between annotation arguments; convert `testmethod` modifier to `@IsTest` annotation.                                                                                                                                                |
 | `apexFormatStandardTypes`     | `false`     | Format the most popular Apex standard types for definitions (does not work for chained method calls). For example: `System`, `Map`, `DateTime`, `SObject` etc.                                                                                                                                                                                   |
@@ -138,13 +148,13 @@ This is Not Opinionated formatter, so the there are multiple configurations avai
 | `apexSortModifiers`           | `false`     | Sort class member modifiers in the certain order. For fields: `<access> static final transient`, for methods: `<access> static/override virtual/abstract`.                                                                                                                                                                                       |
 | `apexForceCurly`              | `false`     | Force curly brackets around `if`/`else`/`for`/`while` statements.                                                                                                                                                                                                                                                                                |
 
-## Editor integration
+## 📝 Editor integration
 
 ### VScode
 
 Follow [this tutorial](https://developer.salesforce.com/tools/vscode/en/user-guide/prettier) from Salesforce in order to use this plugin in VSCode.
 
-## Performance Tips/3rd party integration
+## 🚀 Performance Tips/3rd party integration
 
 By default,
 this library invokes a CLI application to get the AST of the Apex code.
@@ -181,7 +191,7 @@ This can be customized by specifying the `--host` and `--port` arguments:
 start-apex-server --host 127.0.0.1 --port 2118
 ```
 
-## Continuous Integration
+## 🚢 Continuous Integration
 
 Prettier Apex can be used to automatically check correct formatting for Apex code
 in the context of CI/CD, for example:
@@ -193,7 +203,7 @@ nohup start-apex-server >/dev/null 2>&1 &
 # Wait until the server is up before sending requests
 npx wait-on http://localhost:2117/api/ast/
 # Check that Apex files are formatted according to Prettier Apex style
-prettier --check 'project/**/*.{trigger,cls}' --apex-standalone-parser built-in
+prettier --plugin=@ilyamatsuev/prettier-plugin-apex --check 'project/**/*.{trigger,cls}' --apex-standalone-parser built-in
 # Clean up the language server
 stop-apex-server
 ```

@@ -1,43 +1,45 @@
-import prettier, { AstPath, Doc, ParserOptions } from "prettier";
+import type { AstPath, Doc, ParserOptions } from "prettier";
+import * as prettier from "prettier";
+
+import * as jorje from "../vendor/apex-ast-serializer/typings/jorje.d.js";
 import {
   getTrailingComments,
   printComment,
   printDanglingComment,
-} from "./comments";
+} from "./comments.js";
 import {
-  AnnotatedComment,
-  checkIfParentIsDottedExpression,
-  getPrecedence,
-  isBinaryish,
-  isTriggerSource,
-  doesBlockHaveExtraNewLine,
-  normalizeAnnotationName,
-  normalizeTypeName,
-  normalizeAnnotationArgName,
-} from "./util";
-import {
-  ASSIGNMENT,
+  ABSTRACT_MODIFIER,
+  ACCESS_EXCEPTION_MODIFIERS,
+  ACCESS_MODIFIERS,
   APEX_TYPES,
+  ASSIGNMENT,
   BINARY,
   BOOLEAN,
   DATA_CATEGORY,
+  DEFAULT_ACCESS_MODIFIER,
   MODIFIER,
+  MODIFIERS_PRIORITY,
   ORDER,
   ORDER_NULL,
   POSTFIX,
   PREFIX,
-  TRIGGER_USAGE,
   QUERY,
   QUERY_WHERE,
-  ACCESS_MODIFIERS,
-  ACCESS_EXCEPTION_MODIFIERS,
-  DEFAULT_ACCESS_MODIFIER,
-  MODIFIERS_PRIORITY,
   TESTMETHOD_MODIFIER,
-  ABSTRACT_MODIFIER,
-} from "./constants";
-import jorje from "../vendor/apex-ast-serializer/typings/jorje";
-import { EnrichedIfBlock } from "./parser";
+  TRIGGER_USAGE,
+} from "./constants.js";
+import { EnrichedIfBlock } from "./parser.js";
+import {
+  AnnotatedComment,
+  checkIfParentIsDottedExpression,
+  doesBlockHaveExtraNewLine,
+  getPrecedence,
+  isBinaryish,
+  isTriggerSource,
+  normalizeAnnotationArgName,
+  normalizeAnnotationName,
+  normalizeTypeName,
+} from "./util.js";
 
 const docBuilders = prettier.doc.builders;
 const { align, join, hardline, line, softline, group, indent, dedent } =
@@ -484,7 +486,9 @@ function handleVariableExpression(path: AstPath, print: printFn): Doc {
         dottedExpr.value.expr["@class"] === APEX_TYPES.SOQL_EXPRESSION));
 
   parts.push(dottedExpressionDoc);
-  parts.push(join(".", path.map(print, "names")));
+  // Name chain
+  const nameDocs: Doc[] = path.map(print, "names");
+  parts.push(join(".", nameDocs));
 
   // Technically, in a typical array expression (e.g: a[b]),
   // the variable expression is a child of the array expression.
@@ -1015,7 +1019,6 @@ function handlePropertyDeclaration(
 
   const parts: Doc[] = [];
   const innerParts = [];
-
   parts.push(join("", modifierDocs));
   parts.push(path.call(print, "type"));
   parts.push(" ");
@@ -1044,6 +1047,7 @@ function handlePropertyGetterSetter(
 ): (path: AstPath, print: printFn, options: ParserOptions) => Doc {
   return (path: AstPath, print: printFn, options: ParserOptions) => {
     const statementDoc: Doc = path.call(print, "stmnt", "value");
+
     const parts: Doc[] = [];
     parts.push(path.call(print, "modifier", "value"));
     parts.push(action);
@@ -1879,7 +1883,6 @@ function handleIfElseBlock(
         !ifBlockContainsBlockStatement[index - 1] ||
         ifBlockContainsLeadingOwnLineComments[index] ||
         ifBlockContainsTrailingComments[index - 1];
-
       if (shouldAddHardLineBeforeElseIf && !forceCurly) {
         parts.push(hardline);
       } else {

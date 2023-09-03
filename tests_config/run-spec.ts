@@ -1,7 +1,7 @@
 import fs from "fs";
-import { extname } from "path";
-import prettier, { Options } from "prettier";
 import { wrap } from "jest-snapshot-serializer-raw";
+import { extname } from "path";
+import prettier from "prettier";
 
 const { AST_COMPARE } = process.env;
 
@@ -46,7 +46,7 @@ async function parse(string: string, opts: prettier.Options): Promise<any> {
 function runSpec(
   dirname: string,
   parsers: string[],
-  specOptions?: Options & { astCompareDisabled?: boolean },
+  specOptions?: prettier.Options & { astCompareDisabled?: boolean },
 ): void {
   /* istanbul ignore if */
   if (!parsers || !parsers.length) {
@@ -54,7 +54,7 @@ function runSpec(
   }
 
   fs.readdirSync(dirname).forEach((filename: string) => {
-    const path = `${dirname}/${filename}`;
+    const path = `${dirname}${filename}`;
     if (
       extname(filename) !== ".snap" &&
       fs.lstatSync(path).isFile() &&
@@ -63,7 +63,7 @@ function runSpec(
     ) {
       const source = read(path).replace(/\r\n/g, "\n");
 
-      let options: Options[] = [];
+      let options: prettier.Options[] = [];
       if (specOptions !== undefined) {
         if (!Array.isArray(specOptions)) {
           options = [specOptions];
@@ -73,8 +73,8 @@ function runSpec(
       } else {
         options.push({});
       }
-      const mergedOptions = options.map((opts: Options) => ({
-        plugins: ["./src/index"],
+      const mergedOptions = options.map((opts: prettier.Options) => ({
+        plugins: ["./src/index.ts"],
         ...opts,
         parser: parsers[0],
       }));
