@@ -1,17 +1,17 @@
 /* eslint no-param-reassign: 0 */
-import { AstPath, Doc } from "prettier";
-import nodePath from "path";
 import fs from "fs";
+import nodePath from "path";
+import { AstPath, Doc } from "prettier";
 import * as url from "url";
 
 import * as jorje from "../vendor/apex-ast-serializer/typings/jorje.d.js";
 import {
   APEX_TYPES,
-  APEX_TYPES as apexTypes,
   STANDARD_APEX_ANNOTATIONS,
-  STANDARD_APEX_TYPES,
   STANDARD_APEX_ANNOTATION_ARG_NAMES,
-} from "./constants";
+  STANDARD_APEX_TYPES,
+  APEX_TYPES as apexTypes,
+} from "./constants.js";
 
 export type SerializedAst = {
   [APEX_TYPES.PARSER_OUTPUT]: jorje.ParserOutput;

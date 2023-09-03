@@ -8,37 +8,37 @@ import {
   printDanglingComment,
 } from "./comments.js";
 import {
+  ABSTRACT_MODIFIER,
+  ACCESS_EXCEPTION_MODIFIERS,
+  ACCESS_MODIFIERS,
   APEX_TYPES,
   ASSIGNMENT,
   BINARY,
   BOOLEAN,
   DATA_CATEGORY,
+  DEFAULT_ACCESS_MODIFIER,
   MODIFIER,
+  MODIFIERS_PRIORITY,
   ORDER,
   ORDER_NULL,
   POSTFIX,
   PREFIX,
   QUERY,
   QUERY_WHERE,
-  TRIGGER_USAGE,
-  ACCESS_MODIFIERS,
-  ACCESS_EXCEPTION_MODIFIERS,
-  DEFAULT_ACCESS_MODIFIER,
-  MODIFIERS_PRIORITY,
   TESTMETHOD_MODIFIER,
-  ABSTRACT_MODIFIER,
+  TRIGGER_USAGE,
 } from "./constants.js";
 import { EnrichedIfBlock } from "./parser.js";
 import {
   AnnotatedComment,
   checkIfParentIsDottedExpression,
+  doesBlockHaveExtraNewLine,
   getPrecedence,
   isBinaryish,
   isTriggerSource,
-  doesBlockHaveExtraNewLine,
+  normalizeAnnotationArgName,
   normalizeAnnotationName,
   normalizeTypeName,
-  normalizeAnnotationArgName,
 } from "./util.js";
 
 const docBuilders = prettier.doc.builders;

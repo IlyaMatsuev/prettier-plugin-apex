@@ -9,11 +9,11 @@ import {
 } from "./constants.js";
 import {
   AnnotatedComment,
-  capitalize,
   GenericComment,
+  capitalize,
   isApexDocComment,
-  isInlineComment,
   isBinaryish,
+  isInlineComment,
 } from "./util.js";
 
 const { join, lineSuffix, hardline } = prettier.doc.builders;

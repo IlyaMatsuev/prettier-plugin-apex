@@ -1,1 +1,5 @@
-runSpec(__dirname, ["apex"], { apexFormatInlineComments: "strict" });
+import { fileURLToPath } from "url";
+
+runSpec(fileURLToPath(new URL(".", import.meta.url)), ["apex"], {
+  apexFormatInlineComments: "strict",
+});

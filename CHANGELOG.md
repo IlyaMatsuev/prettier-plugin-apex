@@ -1,16 +1,4 @@
-# Unreleased
-
-## Internal Changes
-
-- Our new [Playground](https://apex.dangmai.net) has been published, allowing users to try out Prettier Apex without installing anything.
-- Allow user to customize the secret used to shut down the parsing server.
-- Allow user to specify the protocol (HTTP/HTTPS) that the parsing server uses.
-
-# 2.0.1
-
-- This is a fix version that includes the correct Production bundle. Please refer to the [2.0.0](#200) changes for actual change notes.
-
-# 2.0.0
+# 3.0.0
 
 Please follow [this guide](https://github.com/dangmai/prettier-plugin-apex/wiki/Upgrading-to-Prettier-Apex-v2) to upgrade Prettier Apex to this new major version.
 
@@ -22,17 +10,71 @@ Please follow [this guide](https://github.com/dangmai/prettier-plugin-apex/wiki/
 ## Internal Changes
 
 - Prettier Apex is now distributed as an ECMAScript Module. This shouldn't affect normal usage of the library, but if you are importing code from Prettier Apex you may need to change your code to adapt.
+- Allow user to customize the secret used to shut down the parsing server.
+- Allow user to specify the protocol (HTTP/HTTPS) that the parsing server uses.
 
-# 1.13.0
+# 2.3.0
 
 ## Formatting Changes
 
 - Add support for User Mode in Database Operations ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/738)).
 
+## Dependency Changes
+
+- Support Prettier v3 ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/673)). You cannot use this version with Prettier v2, please plan your upgrade accordingly.
+- Drop support for NodeJS < 16.19.0.
+
+# 2.2.0
+
+## Formatting Changes
+
+- Add a new option `apexForceCurly` that allows to force curly brackets for if-else and loop blocks [issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/14).
+- Enhance the `apexFormatAnnotations` option by merging it with the `apexAnnotationsArgsSpacing` option. The `apexAnnotationsArgsSpacing` option is not available separately anymore. If `apexFormatAnnotation` option is enabled it would also format annotation arguments to lower came case [issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/29).
+- Make the `apexFormatStandardTypes` option less powerful, removing the ability to correct chained methods calls. Now, the option will only work for types in declarations. This was made to increase reliability and make the output more predictable since it was possible that the variable name would be misinterpreted and printed uppercase, for example.
+- Allow an extra line break in the beginning of the class/interface declaration [issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/25).
+- Change the formatting behaviour for `apexFormatInlineComments`. It's now a choice option. Check out how it can be used in the [changelog examples](/CHANGELOG.examples.md) [issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/22).
+
+# 2.1.1
+
+## Internal Changes
+
+- Fix the issue with the package installation that was caused by `husky`.
+
+# 2.1.0
+
 ## Internal Changes
 
 - `start-apex-server` takes optional `-c` flag, which will be passed on to `apex-ast-serializer` as a comma-delimited list of allowed origins that will be added to the CORS headers returned by the parsing server.
 - `start-apex-server` pipes internal logs to console, so that errors can be caught more quickly by users.
+
+## Formatting Changes
+
+- Fix an issue with the `apexSortModifiers` option which removes a method modifier if there is an own-line comment between annotation and method ([issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/13)).
+- Fix an issue with the `apexExplicitAccessModifier` option when all trigger variables are treated as fields, adding non needed `private` keyword ([issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/20)).
+- Fix an issue with the `apexExplicitAccessModifier` option when the `webservice` method gets an access modifier ([issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/12)).
+- Fix an issue with the `apexExplicitAccessModifier` option when the method parameters get `private` modifier ([issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/11)).
+- Update the `apexFormatAnnotations` option to convert the `testmethod` method modifier to the `@IsTest` annotation ([issue](https://github.com/IlyaMatsuev/prettier-plugin-apex/issues/10)).
+- Change the formatting of `webservice` and `testmethod` modifiers to be always printed in lowercase instead of `webService` and `testMethod`.
+
+# 2.0.3
+
+## Formatting Changes
+
+- Fix an issue with the `apexExplicitAccessModifier` option. Now it won't work for the anonymous Apex files.
+
+# 2.0.0
+
+## Formatting Changes
+
+- Add option to format inline comments (`apexFormatInlineComments`)
+- Add option to format annotation names to always be upper camel case (`apexFormatAnnotations`)
+- Add option to add spaces between annotation arguments keys and values (`apexAnnotationsArgsSpacing`)
+- Add option to make closing bracket remain on the same line if the block is empty (`apexEmptyBlockBracketLine`)
+- Add additional space before the opening bracket for the collections initialization: `new Map<> {`
+- Add option to format standard Apex types references (`apexFormatStandardTypes`)
+- Add option to format properties so that if getter or setter has only one statement they are aligned in one line (`apexExpandOneLineProperties`)
+- Add option to explicitly put the `private` keyword if the access modifier was not provided (`apexExplicitAccessModifier`)
+- Add option to place class member modifiers in the specific order. For fields: `<access> static final transient`, for methods: `<access> static/override virtual/abstract` (`apexSortModifiers`)
 
 # 1.12.0
 
