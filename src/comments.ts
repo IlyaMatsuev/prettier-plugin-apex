@@ -9,8 +9,10 @@ import {
 } from "./constants.js";
 import {
   AnnotatedComment,
+  capitalize,
   GenericComment,
   isApexDocComment,
+  isInlineComment,
   isBinaryish,
 } from "./util.js";
 
@@ -22,6 +24,32 @@ const {
   hasNewlineInRange,
   skipWhitespace,
 } = prettier.util;
+
+/**
+ * Formats the inline comment according to the `apexFormatInlineComments` option
+ * @param formatOption the `apexFormatInlineComments` option value
+ * @param comment the comment to print
+ */
+function formatInlineComment(
+  formatOption: "none" | "spaced" | "trimed" | "strict",
+  comment: string,
+): string {
+  if (formatOption === "none") {
+    return comment;
+  }
+
+  const commentText = comment.substring("//".length);
+  if (formatOption === "spaced") {
+    return `//${commentText.startsWith(" ") ? commentText : ` ${commentText}`}`;
+  } else if (formatOption === "trimed") {
+    return `// ${commentText.trim()}`;
+  } else if (formatOption === "strict") {
+    return `// ${capitalize(commentText.trim())}`;
+  }
+  throw new Error(
+    `Invalid value detected for the "apexFormatInlineComments" option: ${formatOption}. Allowed values are: "none", "spaced", "trimed" and "strict"`,
+  );
+}
 
 /**
  * Print ApexDoc comment. This is straight from prettier handling of JSDoc
@@ -58,7 +86,7 @@ export function isPrettierIgnore(comment: AnnotatedComment): boolean {
   return content === "prettier-ignore";
 }
 
-export function printComment(path: AstPath): Doc {
+export function printComment(path: AstPath, options: ParserOptions): Doc {
   // This handles both Inline and Block Comments.
   // We don't just pass through the value because unlike other string literals,
   // this should not be escaped
@@ -66,6 +94,8 @@ export function printComment(path: AstPath): Doc {
   const node = path.getNode();
   if (isApexDocComment(node)) {
     result = printApexDocComment(node);
+  } else if (isInlineComment(node.value)) {
+    result = formatInlineComment(options.apexFormatInlineComments, node.value);
   } else {
     result = node.value;
   }
@@ -104,9 +134,9 @@ export function printDanglingComment(
     parts.push(...Array(numberOfNewLinesToInsert).fill(hardline));
   }
   if (comment["@class"] === apexTypes.INLINE_COMMENT) {
-    parts.push(lineSuffix(printComment(commentPath)));
+    parts.push(lineSuffix(printComment(commentPath, options)));
   } else {
-    parts.push(printComment(commentPath));
+    parts.push(printComment(commentPath, options));
   }
   comment.printed = true;
   return parts;
@@ -278,6 +308,48 @@ function handleBinaryishExpressionRightChildTrailingComment(
 }
 
 /**
+ * In a if/else/for/while block, if there is an end of line comment for the inner statement, we want to
+ * attach it to that statement on the right. This doesn't work by default if we force adding curly braces around the block.
+ * So this method does it instead.
+ */
+function handleBlockStatementTrailingComment(
+  comment: AnnotatedComment,
+  options: ParserOptions,
+) {
+  const { precedingNode } = comment;
+  if (
+    !options.apexForceCurly ||
+    comment.placement !== "endOfLine" ||
+    !precedingNode
+  ) {
+    return false;
+  }
+  if (
+    precedingNode["@class"] === apexTypes.IF_BLOCK ||
+    precedingNode["@class"] === apexTypes.ELSE_BLOCK
+  ) {
+    addTrailingComment(precedingNode.stmnt, comment);
+    return true;
+  }
+  if (precedingNode["@class"] === apexTypes.IF_ELSE_BLOCK) {
+    const commentLeftStatement =
+      precedingNode.elseBlock?.value?.stmnt ??
+      precedingNode.ifBlocks[precedingNode.ifBlocks.length - 1].stmnt;
+    addTrailingComment(commentLeftStatement, comment);
+    return true;
+  }
+  if (
+    (precedingNode["@class"] === apexTypes.WHILE_LOOP ||
+      precedingNode["@class"] === apexTypes.FOR_LOOP) &&
+    precedingNode.stmnt?.value
+  ) {
+    addTrailingComment(precedingNode.stmnt.value, comment);
+    return true;
+  }
+  return false;
+}
+
+/**
  * Turn the leading comment in a long method or variable chain into the preceding
  * comment of a previous node. Without doing that, we have an awkward position
  * for the . character like so:
@@ -368,6 +440,7 @@ export function handleOwnLineComment(
  *
  * @param comment The comment node.
  * @param sourceCode The entire source code.
+ * @param options The prettier options.
  * @returns {boolean} Whether we have manually attached this comment to some AST
  * node. If `true` is returned, Prettier will no longer try to attach this
  * comment based on its internal heuristic.
@@ -375,10 +448,12 @@ export function handleOwnLineComment(
 export function handleEndOfLineComment(
   comment: AnnotatedComment,
   sourceCode: string,
+  options: ParserOptions,
 ): boolean {
   return (
     handleDanglingComment(comment) ||
     handleBinaryishExpressionRightChildTrailingComment(comment) ||
+    handleBlockStatementTrailingComment(comment, options) ||
     handleBlockStatementLeadingComment(comment) ||
     handleWhereExpression(comment, sourceCode) ||
     handleModifierPrettierIgnoreComment(comment) ||

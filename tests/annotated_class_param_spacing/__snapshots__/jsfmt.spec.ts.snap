@@ -1,0 +1,12 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Format apex: AnnotatedParamSpacing.cls: AnnotatedParamSpacing.cls 1`] = `
+@isTest(SeeAllData=false) class AnnotatedParamSpacing
+{}
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@IsTest(seeAllData = false)
+class AnnotatedParamSpacing {
+}
+
+`;

@@ -46,7 +46,7 @@ async function parse(string: string, opts: prettier.Options): Promise<any> {
 function runSpec(
   dirname: string,
   parsers: string[],
-  specOptions?: prettier.Options,
+  specOptions?: prettier.Options & { astCompareDisabled?: boolean },
 ): void {
   /* istanbul ignore if */
   if (!parsers || !parsers.length) {
@@ -88,7 +88,8 @@ function runSpec(
           );
         });
 
-        if (AST_COMPARE) {
+        // Some of the tests can not pass the AST Compare just because they may fix keywords casing or another valid reason
+        if (AST_COMPARE && !specOptions?.astCompareDisabled) {
           test(`Verify AST: ${filename}`, async () => {
             const ast = await parse(source, mergedOpts);
             const ppast = await parse(output, mergedOpts);

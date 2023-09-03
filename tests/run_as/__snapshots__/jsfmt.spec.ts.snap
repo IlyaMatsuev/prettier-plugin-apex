@@ -3,7 +3,7 @@
 exports[`Format apex: RunAsClass.cls: RunAsClass.cls 1`] = `
 @isTest
 class RunAsClass {
-  static testmethod void runAsTest() {
+  static TestMethod void runAsTest() {
     User userOne = [SELECT Id FROM User LIMIT 1];
     User userTwo = [SELECT Id FROM User LIMIT 1 OFFSET 1];
 
@@ -36,7 +36,7 @@ class RunAsClass {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 @isTest
 class RunAsClass {
-  static testMethod void runAsTest() {
+  static testmethod void runAsTest() {
     User userOne = [SELECT Id FROM User LIMIT 1];
     User userTwo = [SELECT Id FROM User LIMIT 1 OFFSET 1];
 

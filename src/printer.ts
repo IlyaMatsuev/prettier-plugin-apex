@@ -1,4 +1,4 @@
-import type { AstPath, Doc } from "prettier";
+import type { AstPath, Doc, ParserOptions } from "prettier";
 import * as prettier from "prettier";
 
 import * as jorje from "../vendor/apex-ast-serializer/typings/jorje.d.js";
@@ -21,6 +21,12 @@ import {
   QUERY,
   QUERY_WHERE,
   TRIGGER_USAGE,
+  ACCESS_MODIFIERS,
+  ACCESS_EXCEPTION_MODIFIERS,
+  DEFAULT_ACCESS_MODIFIER,
+  MODIFIERS_PRIORITY,
+  TESTMETHOD_MODIFIER,
+  ABSTRACT_MODIFIER,
 } from "./constants.js";
 import { EnrichedIfBlock } from "./parser.js";
 import {
@@ -28,11 +34,18 @@ import {
   checkIfParentIsDottedExpression,
   getPrecedence,
   isBinaryish,
+  isTriggerSource,
+  doesBlockHaveExtraNewLine,
+  normalizeAnnotationName,
+  normalizeTypeName,
+  normalizeAnnotationArgName,
 } from "./util.js";
 
 const docBuilders = prettier.doc.builders;
 const { align, join, hardline, line, softline, group, indent, dedent } =
   docBuilders;
+const { printDocToString } = prettier.doc.printer;
+const { findInDoc } = prettier.doc.utils;
 
 type printFn = (path: AstPath) => Doc;
 
@@ -70,6 +83,135 @@ function pushIfExist(
     if (postDocs) {
       postDocs.forEach((postDoc: Doc) => parts.push(postDoc));
     }
+  }
+  return parts;
+}
+
+function hasModifiers(modifiers: Doc[], ...search: Doc[]): boolean {
+  return !!findInDoc(
+    modifiers,
+    (d) =>
+      search.some((a) => {
+        if (typeof d === "string" && typeof a === "string") {
+          return d.toLowerCase() === a.toLowerCase();
+        }
+        return d === a;
+      })
+        ? d
+        : undefined,
+    undefined,
+  );
+}
+
+function normalizeModifiers(modifiers: Doc[], options: ParserOptions): Doc[] {
+  // For annotation there is always "@" at the beginning of the Doc
+  const annotationModifiers = modifiers.filter(
+    (m) => Array.isArray(m) && m[0] === "@",
+  );
+  let nonAnnotationModifiers = modifiers
+    .filter((m) => !Array.isArray(m) || m[0] !== "@")
+    .flat(2);
+
+  // Replace "testmethod" modifier with the "@IsTest" annotation
+  if (
+    options.apexFormatAnnotations &&
+    hasModifiers(nonAnnotationModifiers, TESTMETHOD_MODIFIER)
+  ) {
+    // Delete "testmethod" modifier and space after it
+    nonAnnotationModifiers.splice(
+      nonAnnotationModifiers.indexOf(TESTMETHOD_MODIFIER),
+      2,
+    );
+    if (!hasModifiers(annotationModifiers, "istest")) {
+      annotationModifiers.unshift(["@IsTest", hardline]);
+    }
+  }
+
+  // Add default modifier (private) if the option is enabled
+  if (
+    options.apexExplicitAccessModifier &&
+    !isTriggerSource(options.filepath) &&
+    options.parser === "apex" &&
+    !hasModifiers(
+      nonAnnotationModifiers,
+      ...ACCESS_MODIFIERS,
+      ...ACCESS_EXCEPTION_MODIFIERS,
+    )
+  ) {
+    nonAnnotationModifiers.unshift(DEFAULT_ACCESS_MODIFIER, " ");
+  }
+
+  // Sort modifiers if the option is enabled
+  if (options.apexSortModifiers && nonAnnotationModifiers.length) {
+    const danglingComments = modifiers
+      .flat(2)
+      .filter(
+        (m) =>
+          Array.isArray(m) &&
+          m.length &&
+          typeof m[0] === "string" &&
+          (m[0].startsWith("//") ||
+            (m[0].startsWith("/*") && m[0].endsWith("*/"))),
+      );
+    nonAnnotationModifiers = [
+      ...danglingComments,
+      nonAnnotationModifiers
+        .filter((m) => typeof m === "string" && m.trim())
+        .sort((a, b) => {
+          const aPriority = MODIFIERS_PRIORITY.indexOf(a as string);
+          const bPriority = MODIFIERS_PRIORITY.indexOf(b as string);
+          if (aPriority === -1) {
+            return 1;
+          }
+          if (bPriority === -1) {
+            return -1;
+          }
+          return aPriority - bPriority;
+        })
+        .join(" ") as Doc,
+      " ",
+    ];
+  }
+
+  // Put annotations first
+  return [...annotationModifiers, ...nonAnnotationModifiers];
+}
+
+function isOneLineStatement(textStatement: string): boolean {
+  // Text statement looks like this: {
+  //   return 'test';
+  // }
+  const oneLineStatementBreaksCount = 2;
+  return (
+    (textStatement.match(/\n/g) || []).length <= oneLineStatementBreaksCount
+  );
+}
+
+function handleExpandedBlockStatement(
+  statement: Doc,
+  options: ParserOptions,
+): Doc {
+  const textStatement = printDocToString(statement, options).formatted;
+  return isOneLineStatement(textStatement)
+    ? textStatement.replace(/\s+/g, " ")
+    : statement;
+}
+
+function handleBracesAroundStatement(
+  statement: Doc,
+  statementType: Doc,
+  options: ParserOptions,
+): Doc {
+  const parts: Doc[] = [];
+  if (statementType === APEX_TYPES.BLOCK_STATEMENT) {
+    parts.push(" ");
+    pushIfExist(parts, statement);
+  } else if (options.apexForceCurly) {
+    parts.push(" ");
+    parts.push(group(indent(["{", hardline, statement])));
+    parts.push([hardline, "}"]);
+  } else {
+    pushIfExist(parts, group(indent([hardline, statement])));
   }
   return parts;
 }
@@ -392,7 +534,7 @@ function handleJavaVariableExpression(path: AstPath, print: printFn): Doc {
 function handleLiteralExpression(
   path: AstPath,
   print: printFn,
-  options: prettier.ParserOptions,
+  options: ParserOptions,
 ): Doc {
   const node = path.getNode();
   const literalType: Doc = path.call(print, "type", "$");
@@ -501,7 +643,7 @@ function handleAnonymousBlockUnit(path: AstPath, print: printFn): Doc {
 function handleTriggerDeclarationUnit(
   path: AstPath,
   print: printFn,
-  options: any,
+  options: ParserOptions,
 ) {
   const usageDocs: Doc[] = path.map(print, "usages");
   const targetDocs: Doc[] = path.map(print, "target");
@@ -547,19 +689,29 @@ function handleTriggerDeclarationUnit(
   } else if (memberDocs.length > 0) {
     parts.push(indent([hardline, ...memberDocs]));
   }
-  parts.push(dedent([hardline, "}"]));
+  if (
+    danglingCommentDocs.length ||
+    memberDocs.length ||
+    !options.apexEmptyBlockBracketLine
+  ) {
+    parts.push(hardline);
+  }
+  parts.push("}");
   return parts;
 }
 
 function handleInterfaceDeclaration(
   path: AstPath,
   print: printFn,
-  options: any,
+  options: ParserOptions,
 ) {
   const node = path.getNode();
 
   const superInterface: Doc = path.call(print, "superInterface", "value");
-  const modifierDocs: Doc[] = path.map(print, "modifiers");
+  const modifierDocs: Doc[] = normalizeModifiers(
+    path.map(print, "modifiers"),
+    options,
+  );
   const memberParts = path
     .map(print, "members")
     .filter((member: Doc) => member);
@@ -599,24 +751,43 @@ function handleInterfaceDeclaration(
   }
   parts.push(" ");
   parts.push("{");
+
+  const nodeOriginalText = options.originalText.substring(
+    options.locStart(node),
+    options.locEnd(node),
+  );
+  if (doesBlockHaveExtraNewLine(nodeOriginalText)) {
+    parts.push(hardline);
+  }
+
   if (danglingCommentDocs.length > 0) {
     parts.push(indent([hardline, ...danglingCommentDocs]));
   } else if (memberDocs.length > 0) {
     parts.push(indent([hardline, ...memberDocs]));
   }
-  parts.push([hardline, "}"]);
+  if (
+    danglingCommentDocs.length ||
+    memberDocs.length ||
+    !options.apexEmptyBlockBracketLine
+  ) {
+    parts.push(hardline);
+  }
+  parts.push("}");
   return parts;
 }
 
 function handleClassDeclaration(
   path: AstPath,
   print: printFn,
-  options: any,
+  options: ParserOptions,
 ): Doc {
   const node = path.getNode();
 
   const superClass: Doc = path.call(print, "superClass", "value");
-  const modifierDocs: Doc[] = path.map(print, "modifiers");
+  const modifierDocs: Doc[] = normalizeModifiers(
+    path.map(print, "modifiers"),
+    options,
+  );
   const memberParts = path
     .map(print, "members")
     .filter((member: Doc) => member);
@@ -663,16 +834,36 @@ function handleClassDeclaration(
   }
   parts.push(" ");
   parts.push("{");
+
+  const nodeOriginalText = options.originalText.substring(
+    options.locStart(node),
+    options.locEnd(node),
+  );
+  if (doesBlockHaveExtraNewLine(nodeOriginalText)) {
+    parts.push(hardline);
+  }
+
   if (danglingCommentDocs.length > 0) {
     parts.push(indent([hardline, ...danglingCommentDocs]));
   } else if (memberDocs.length > 0) {
     parts.push(indent([hardline, ...memberDocs]));
   }
-  parts.push([hardline, "}"]);
+  if (
+    danglingCommentDocs.length ||
+    memberDocs.length ||
+    !options.apexEmptyBlockBracketLine
+  ) {
+    parts.push(hardline);
+  }
+  parts.push("}");
   return parts;
 }
 
-function handleAnnotation(path: AstPath, print: printFn): Doc {
+function handleAnnotation(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
   const node = path.getNode();
   const parts: Doc[] = [];
   const trailingParts: Doc[] = [];
@@ -693,12 +884,16 @@ function handleAnnotation(path: AstPath, print: printFn): Doc {
       // it will be attached to the Annotation's parent node (e.g. MethodDecl)
       if (commentNode.trailing) {
         trailingParts.push(" ");
-        trailingParts.push(printComment(innerPath));
+        trailingParts.push(printComment(innerPath, options));
       }
     }, "comments");
   }
   parts.push("@");
-  parts.push(path.call(print, "name", "value"));
+  let annotationName = path.call(print, "name", "value");
+  if (options.apexFormatAnnotations) {
+    annotationName = normalizeAnnotationName(annotationName);
+  }
+  parts.push(annotationName);
   if (parameterDocs.length > 0) {
     parameterParts.push("(");
     parameterParts.push(softline);
@@ -712,10 +907,20 @@ function handleAnnotation(path: AstPath, print: printFn): Doc {
   return parts;
 }
 
-function handleAnnotationKeyValue(path: AstPath, print: printFn): Doc {
+function handleAnnotationKeyValue(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
   const parts: Doc[] = [];
-  parts.push(path.call(print, "key", "value"));
-  parts.push("=");
+  let argName = path.call(print, "key", "value");
+  let separator = "=";
+  if (options.apexFormatAnnotations) {
+    argName = normalizeAnnotationArgName(argName);
+    separator = " = ";
+  }
+  parts.push(argName);
+  parts.push(separator);
   parts.push(path.call(print, "value"));
   return parts;
 }
@@ -750,9 +955,17 @@ function handleAnnotationString(path: AstPath, print: printFn): Doc {
   return parts;
 }
 
-function handleClassTypeRef(path: AstPath, print: printFn): Doc {
+function handleClassTypeRef(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
   const parts: Doc[] = [];
-  parts.push(join(".", path.map(print, "names")));
+  let names = path.map(print, "names");
+  if (options.apexFormatStandardTypes) {
+    names = names.map(normalizeTypeName);
+  }
+  parts.push(join(".", names));
   const typeArgumentDocs: Doc[] = path.map(print, "typeArguments");
   if (typeArgumentDocs.length > 0) {
     parts.push("<");
@@ -792,8 +1005,15 @@ function handleStatementBlockMember(
   };
 }
 
-function handlePropertyDeclaration(path: AstPath, print: printFn): Doc {
-  const modifierDocs: Doc[] = path.map(print, "modifiers");
+function handlePropertyDeclaration(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
+  const modifierDocs: Doc[] = normalizeModifiers(
+    path.map(print, "modifiers"),
+    options,
+  );
   const getterDoc: Doc = path.call(print, "getter", "value");
   const setterDoc: Doc = path.call(print, "setter", "value");
 
@@ -824,8 +1044,8 @@ function handlePropertyDeclaration(path: AstPath, print: printFn): Doc {
 
 function handlePropertyGetterSetter(
   action: "get" | "set",
-): (path: AstPath, print: printFn) => Doc {
-  return (path: AstPath, print: printFn) => {
+): (path: AstPath, print: printFn, options: ParserOptions) => Doc {
+  return (path: AstPath, print: printFn, options: ParserOptions) => {
     const statementDoc: Doc = path.call(print, "stmnt", "value");
 
     const parts: Doc[] = [];
@@ -833,7 +1053,11 @@ function handlePropertyGetterSetter(
     parts.push(action);
     if (statementDoc) {
       parts.push(" ");
-      parts.push(statementDoc);
+      parts.push(
+        options.apexExpandOneLineProperties
+          ? statementDoc
+          : handleExpandedBlockStatement(statementDoc, options),
+      );
     } else {
       parts.push(";");
     }
@@ -841,14 +1065,23 @@ function handlePropertyGetterSetter(
   };
 }
 
-function handleMethodDeclaration(path: AstPath, print: printFn): Doc {
+function handleMethodDeclaration(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
   const statementDoc: Doc = path.call(print, "stmnt", "value");
-  const modifierDocs: Doc[] = path.map(print, "modifiers");
+  let modifierDocs: Doc[] = path.map(print, "modifiers");
   const parameterDocs: Doc[] = path.map(print, "parameters");
 
   const parts: Doc[] = [];
   const parameterParts = [];
   // Modifiers
+  if (statementDoc || hasModifiers(modifierDocs, ABSTRACT_MODIFIER)) {
+    // There is no statement if this is an interface method or abstract method
+    // But for abstract methods it's possible to have access modifier
+    modifierDocs = normalizeModifiers(modifierDocs, options);
+  }
   if (modifierDocs.length > 0) {
     parts.push(modifierDocs);
   }
@@ -876,7 +1109,7 @@ function handleMethodDeclaration(path: AstPath, print: printFn): Doc {
 function handleModifierParameterRef(path: AstPath, print: printFn): Doc {
   const parts: Doc[] = [];
   // Modifiers
-  parts.push(join("", path.map(print, "modifiers")));
+  parts.push(...path.map(print, "modifiers"));
   // Type
   parts.push(path.call(print, "typeRef"));
   parts.push(" ");
@@ -951,9 +1184,12 @@ function handleDmlMergeStatement(path: AstPath, print: printFn): Doc {
 function handleEnumDeclaration(
   path: AstPath,
   print: printFn,
-  options: any,
+  options: ParserOptions,
 ): Doc {
-  const modifierDocs: Doc[] = path.map(print, "modifiers");
+  const modifierDocs: Doc[] = normalizeModifiers(
+    path.map(print, "modifiers"),
+    options,
+  );
   const memberDocs: Doc[] = path.map(print, "members");
   const danglingCommentDocs = getDanglingCommentDocs(path, print, options);
 
@@ -969,7 +1205,14 @@ function handleEnumDeclaration(
   } else if (memberDocs.length > 0) {
     parts.push(indent([hardline, join([",", hardline], memberDocs)]));
   }
-  parts.push([hardline, "}"]);
+  if (
+    danglingCommentDocs.length ||
+    memberDocs.length ||
+    !options.apexEmptyBlockBracketLine
+  ) {
+    parts.push(hardline);
+  }
+  parts.push("}");
   return parts;
 }
 
@@ -1057,7 +1300,7 @@ function handleRunAsBlock(path: AstPath, print: printFn): Doc {
 function handleBlockStatement(
   path: AstPath,
   print: printFn,
-  options: any,
+  options: ParserOptions,
 ): Doc {
   const parts: Doc[] = [];
   const danglingCommentDocs = getDanglingCommentDocs(path, print, options);
@@ -1070,7 +1313,13 @@ function handleBlockStatement(
     parts.push(hardline);
     parts.push(join(hardline, statementDocs));
   }
-  parts.push(dedent(hardline));
+  if (
+    danglingCommentDocs.length ||
+    statementDocs.length ||
+    !options.apexEmptyBlockBracketLine
+  ) {
+    parts.push(dedent(hardline));
+  }
   parts.push("}");
   return groupIndentConcat(parts);
 }
@@ -1159,11 +1408,19 @@ function handleFinallyBlock(path: AstPath, print: printFn): Doc {
   return parts;
 }
 
-function handleVariableDeclarations(path: AstPath, print: printFn): Doc {
-  const modifierDocs: Doc[] = path.map(print, "modifiers");
-
+function handleVariableDeclarations(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
   const parts: Doc[] = [];
+  let modifierDocs: Doc[] = path.map(print, "modifiers");
+
   // Modifiers
+  if (path.getParentNode()["@class"] === APEX_TYPES.FIELD_MEMBER) {
+    // Add private access modifier if this is a class field
+    modifierDocs = normalizeModifiers(modifierDocs, options);
+  }
   parts.push(join("", modifierDocs));
 
   // Type
@@ -1461,6 +1718,7 @@ function handleNewSetLiteral(path: AstPath, print: printFn): Doc {
   parts.push("<");
   parts.push(join([",", " "], path.map(print, "types")));
   parts.push(">");
+  parts.push(" ");
   // Values
   parts.push("{");
   if (valueDocs.length > 0) {
@@ -1535,6 +1793,7 @@ function handleNewMapLiteral(path: AstPath, print: printFn): Doc {
   parts.push("<");
   parts.push(join(", ", path.map(print, "types")));
   parts.push(">");
+  parts.push(" ");
   // Values
   parts.push("{");
   if (valueDocs.length > 0) {
@@ -1564,6 +1823,7 @@ function handleNewListLiteral(path: AstPath, print: printFn): Doc {
   parts.push("List<");
   parts.push(join(".", path.map(print, "types")));
   parts.push(">");
+  parts.push(" ");
   // Values
   parts.push("{");
   if (valueDocs.length > 0) {
@@ -1583,8 +1843,13 @@ function handleNewExpression(path: AstPath, print: printFn): Doc {
   return parts;
 }
 
-function handleIfElseBlock(path: AstPath, print: printFn): Doc {
+function handleIfElseBlock(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
   const node = path.getNode();
+  const forceCurly = options.apexForceCurly;
   const parts: Doc[] = [];
   const ifBlockDocs: Doc[] = path.map(print, "ifBlocks");
   const elseBlockDoc: Doc = path.call(print, "elseBlock", "value");
@@ -1618,7 +1883,7 @@ function handleIfElseBlock(path: AstPath, print: printFn): Doc {
         !ifBlockContainsBlockStatement[index - 1] ||
         ifBlockContainsLeadingOwnLineComments[index] ||
         ifBlockContainsTrailingComments[index - 1];
-      if (shouldAddHardLineBeforeElseIf) {
+      if (shouldAddHardLineBeforeElseIf && !forceCurly) {
         parts.push(hardline);
       } else {
         parts.push(" ");
@@ -1628,7 +1893,7 @@ function handleIfElseBlock(path: AstPath, print: printFn): Doc {
     // We also need to handle the last if block, since it might need to add
     // either a space or a hardline before the else block
     if (index === ifBlockDocs.length - 1 && elseBlockDoc) {
-      if (ifBlockContainsBlockStatement[index]) {
+      if (ifBlockContainsBlockStatement[index] || forceCurly) {
         parts.push(" ");
       } else {
         parts.push(hardline);
@@ -1658,7 +1923,11 @@ function handleIfElseBlock(path: AstPath, print: printFn): Doc {
   return groupConcat(parts);
 }
 
-function handleIfBlock(path: AstPath, print: printFn): Doc {
+function handleIfBlock(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
   const node: EnrichedIfBlock = path.getNode();
   const statementType: Doc = path.call(print, "stmnt", "@class");
   const statementDoc: Doc = path.call(print, "stmnt");
@@ -1679,28 +1948,22 @@ function handleIfBlock(path: AstPath, print: printFn): Doc {
   conditionParts.push(")");
   parts.push(groupIndentConcat(conditionParts));
   // Body block
-  if (statementType === APEX_TYPES.BLOCK_STATEMENT) {
-    parts.push(" ");
-    pushIfExist(parts, statementDoc);
-  } else {
-    pushIfExist(parts, group(indent([hardline, statementDoc])));
-  }
+  parts.push(handleBracesAroundStatement(statementDoc, statementType, options));
   return parts;
 }
 
-function handleElseBlock(path: AstPath, print: printFn): Doc {
+function handleElseBlock(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
   const statementType: Doc = path.call(print, "stmnt", "@class");
   const statementDoc: Doc = path.call(print, "stmnt");
 
   const parts: Doc[] = [];
   parts.push("else");
   // Body block
-  if (statementType === APEX_TYPES.BLOCK_STATEMENT) {
-    parts.push(" ");
-    pushIfExist(parts, statementDoc);
-  } else {
-    pushIfExist(parts, group(indent([hardline, statementDoc])));
-  }
+  parts.push(handleBracesAroundStatement(statementDoc, statementType, options));
   return parts;
 }
 
@@ -2474,7 +2737,7 @@ function handleOrderOperation(
   childClass: string,
   path: AstPath,
   _print: printFn,
-  opts: prettier.ParserOptions,
+  opts: ParserOptions,
 ): Doc {
   const loc = opts.locStart(path.getNode());
   if (loc) {
@@ -2487,7 +2750,7 @@ function handleNullOrderOperation(
   childClass: string,
   path: AstPath,
   _print: printFn,
-  opts: prettier.ParserOptions,
+  opts: ParserOptions,
 ): Doc {
   const loc = opts.locStart(path.getNode());
   if (loc) {
@@ -2682,7 +2945,11 @@ function handlePrefixOperator(path: AstPath): Doc {
   return PREFIX[node.$];
 }
 
-function handleWhileLoop(path: AstPath, print: printFn): Doc {
+function handleWhileLoop(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
   const node = path.getNode();
   const conditionDoc: Doc = path.call(print, "condition");
 
@@ -2698,14 +2965,13 @@ function handleWhileLoop(path: AstPath, print: printFn): Doc {
     return parts;
   }
   // Body
-  const statementDoc: Doc = path.call(print, "stmnt", "value");
-  const statementType: Doc = path.call(print, "stmnt", "value", "@class");
-  if (statementType === APEX_TYPES.BLOCK_STATEMENT) {
-    parts.push(" ");
-    pushIfExist(parts, statementDoc);
-  } else {
-    pushIfExist(parts, group(indent([hardline, statementDoc])));
-  }
+  parts.push(
+    handleBracesAroundStatement(
+      path.call(print, "stmnt", "value"),
+      path.call(print, "stmnt", "value", "@class"),
+      options,
+    ),
+  );
   return parts;
 }
 
@@ -2729,7 +2995,11 @@ function handleDoLoop(path: AstPath, print: printFn): Doc {
   return parts;
 }
 
-function handleForLoop(path: AstPath, print: printFn): Doc {
+function handleForLoop(
+  path: AstPath,
+  print: printFn,
+  options: ParserOptions,
+): Doc {
   const node = path.getNode();
   const forControlDoc: Doc = path.call(print, "forControl");
 
@@ -2781,14 +3051,13 @@ function handleForLoop(path: AstPath, print: printFn): Doc {
     return parts;
   }
   // Body
-  const statementType: Doc = path.call(print, "stmnt", "value", "@class");
-  const statementDoc: Doc = path.call(print, "stmnt", "value");
-  if (statementType === APEX_TYPES.BLOCK_STATEMENT) {
-    parts.push(" ");
-    pushIfExist(parts, statementDoc);
-  } else {
-    pushIfExist(parts, group(indent([hardline, statementDoc])));
-  }
+  parts.push(
+    handleBracesAroundStatement(
+      path.call(print, "stmnt", "value"),
+      path.call(print, "stmnt", "value", "@class"),
+      options,
+    ),
+  );
   return parts;
 }
 
@@ -2856,13 +3125,13 @@ function handleForInit(path: AstPath, print: printFn): Doc[] {
 type singleNodeHandler = (
   path: AstPath,
   print: printFn,
-  options: prettier.ParserOptions,
+  options: ParserOptions,
 ) => Doc;
 type childNodeHandler = (
   childClass: string,
   path: AstPath,
   print: printFn,
-  options: prettier.ParserOptions,
+  options: ParserOptions,
 ) => Doc;
 
 const nodeHandler: { [key: string]: childNodeHandler | singleNodeHandler } = {};
@@ -3146,11 +3415,7 @@ function handleTrailingEmptyLines(doc: Doc, node: any): Doc {
   return doc;
 }
 
-function genericPrint(
-  path: AstPath,
-  options: prettier.ParserOptions,
-  print: printFn,
-) {
+function genericPrint(path: AstPath, options: ParserOptions, print: printFn) {
   const n = path.getNode();
   if (typeof n === "number" || typeof n === "boolean") {
     return n.toString();
@@ -3196,10 +3461,10 @@ function genericPrint(
   );
 }
 
-let options: prettier.ParserOptions;
+let options: ParserOptions;
 export default function printGenerically(
   path: AstPath,
-  opts: prettier.ParserOptions,
+  opts: ParserOptions,
   print: printFn,
 ): Doc {
   if (typeof opts === "object") {
