@@ -19,7 +19,7 @@ cd "$location"
 mkdir "test-npm-module"
 cd test-npm-module
 npm init --yes
-npm install --save-dev prettier prettier-plugin-apex
+npm install --save-dev prettier @ilyamatsuev/prettier-plugin-apex
 cp "$CURRENT_DIR/AnonymousClass.cls" "$location/test-npm-module"
 cp "$CURRENT_DIR/NonEmptyNamedClass.cls" "$location/test-npm-module"
 
