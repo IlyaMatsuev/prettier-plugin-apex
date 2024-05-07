@@ -1,4 +1,5 @@
 {
+  "root": true,
   "parser": "@typescript-eslint/parser",
   "extends": [
     "plugin:@typescript-eslint/recommended",
@@ -18,25 +19,16 @@
     "import/no-extraneous-dependencies": [
       "error",
       {
-        "devDependencies": [
-          "tests*/**/*.ts",
-          "vite.config.ts",
-          "playground/*.ts",
-          "playground/*.tsx"
-        ]
+        "devDependencies": ["tests*/**/*.ts", "vite.config.ts"]
       }
     ],
-    "import/extensions": [2, "always"],
+    "import/extensions": [2, "ignorePackages"],
     "default-case": 0
   },
   "globals": {
     "runSpec": true
   },
-  "env": {
-    "jest": true
-  },
   "parserOptions": {
     "project": "./tsconfig.json"
-  },
-  "ignorePatterns": ["jest.*.js"]
+  }
 }

@@ -7,3 +7,13 @@ tests/local_only
 repo
 dist
 *.tgz
+.gradle
+build
+out
+.sfdx
+.vscode/settings.json
+packages/prettier-plugin-apex/vendor
+
+.nx/cache
+.pnpm-store
+.DS_Store

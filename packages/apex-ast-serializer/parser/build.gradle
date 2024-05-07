@@ -1,0 +1,151 @@
+plugins {
+  id 'java-library'
+  id "java-test-fixtures"
+  id 'application'
+  id 'jacoco'
+  id 'org.graalvm.buildtools.native' version '0.10.1'
+}
+
+sourceSets {
+  test {
+    resources {
+      srcDirs "../../prettier-plugin-apex/tests"
+    }
+  }
+  testFixtures {
+    compileClasspath += sourceSets.main.compileClasspath
+    runtimeClasspath += sourceSets.main.runtimeClasspath
+  }
+  graalvm {}
+}
+
+application {
+  mainClass.set("net.dangmai.serializer.Apex")
+  applicationDefaultJvmArgs = [
+    "--add-opens=java.base/java.lang=ALL-UNNAMED",
+    "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+    "--add-opens=java.base/java.util=ALL-UNNAMED",
+    "--add-opens=java.base/java.text=ALL-UNNAMED"
+  ]
+}
+
+java {
+  group 'net.dangmai'
+  version '1.0-SNAPSHOT'
+
+  sourceCompatibility = JavaVersion.VERSION_11
+  targetCompatibility = JavaVersion.VERSION_11
+}
+
+repositories {
+  flatDir {
+    dirs '../libs'
+  }
+  mavenCentral()
+  maven { url "https://jitpack.io" }
+  gradlePluginPortal()
+}
+
+run {
+  standardInput = System.in
+}
+
+ext {
+  junitVersion = '5.10.2'
+}
+
+dependencies {
+  api name: 'apex-jorje-lsp'
+  // https://mvnrepository.com/artifact/com.thoughtworks.xstream/xstream
+  api group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.20'
+
+  // https://mvnrepository.com/artifact/commons-cli/commons-cli
+  api group: 'commons-cli', name: 'commons-cli', version: '1.7.0'
+
+  // https://mvnrepository.com/artifact/commons-io/commons-io
+  api group: 'commons-io', name: 'commons-io', version: '2.16.1'
+
+  // https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api
+  testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${junitVersion}"
+  testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: "${junitVersion}"
+  testRuntimeOnly group: 'org.junit.platform', name: 'junit-platform-launcher', version: '1.10.2'
+
+  // https://mvnrepository.com/artifact/org.json/json
+  testFixturesImplementation group: 'org.json', name: 'json', version: '20240303'
+
+  // https://mvnrepository.com/artifact/io.github.classgraph/classgraph
+  graalvmImplementation group: 'io.github.classgraph', name: 'classgraph', version: '4.8.172'
+  nativeImageCompileOnly sourceSets.graalvm.output.classesDirs
+}
+
+configurations {
+  nativeImageClasspath.extendsFrom(graalvmImplementation)
+}
+
+// Common configs for all Test tasks. Currently this includes the standard
+// `test` task, and the `nativeInstrumentedTest` task.
+tasks.withType(Test) {
+  useJUnitPlatform()
+  jvmArgs += application.applicationDefaultJvmArgs
+  testLogging.showStandardStreams = true
+}
+
+test {
+  finalizedBy jacocoTestReport
+}
+jacocoTestReport {
+  reports {
+    xml.required = true
+  }
+  dependsOn test
+}
+
+// This task can be used to run tests under native instrumentation
+task nativeInstrumentedTest(type: Test) {
+}
+
+graalvmNative {
+  metadataRepository {
+    // Since version 0.10.0, the metadata repository is enabled by default,
+    // The metadata repository contains community-driven collection of
+    // reachability metadata for open-source libraries. However, they are
+    // leading to issues with apex-jorje-lsp library, and I haven't found
+    // a way to exclude it yet, so for now I'll disable it.
+    enabled = false
+  }
+  agent {
+    enabled = true
+    defaultMode = "standard"
+
+    // Weird syntax: https://github.com/graalvm/native-build-tools/issues/303
+    // This is here because we don't want to set up the full native-image
+    // system while running tests in CI/CD.
+    java.util.function.Predicate predicate = { t -> t.name != 'test' }
+    tasksToInstrumentPredicate = predicate
+  }
+  binaries {
+    main {
+      configurationFileDirectories.from(
+        file('build/native/agent-output/nativeInstrumentedTest')
+      )
+      imageName = 'apex-ast-serializer'
+      sharedLibrary = false
+      buildArgs.add('--features=net.dangmai.serializer.RuntimeReflectionRegistrationFeature')
+      buildArgs.addAll(application.applicationDefaultJvmArgs)
+    }
+  }
+}
+
+// This is the task that builds native executable for the host platform.
+// Run it: `gradle buildNative`
+// It contains multiple steps in order to achive this goal:
+// - It runs the entire test suite, and uses native-image-agent
+// to figure out what reflections/proxies are used as part of that run.
+// - Then it uses native-image to compile the final artifacts, using the information
+// in the previous step (which is stored in `build/native/agent-output/`)
+// - The final artifact is produced and stored in `build/native/nativeCompile`
+task buildNative {
+  dependsOn 'nativeInstrumentedTest'
+  dependsOn 'nativeCompile'
+  tasks.findByName('nativeCompile').mustRunAfter 'nativeInstrumentedTest'
+}

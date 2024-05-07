@@ -1,0 +1,46 @@
+{
+  "name": "apex-ast-serializer",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/apex-ast-serializer",
+  "namedInputs": {
+    "gradle": ["{projectRoot}/**/build.gradle"],
+    "default": ["{projectRoot}/**/*.java"]
+  },
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "inputs": ["gradle", "default"],
+      "outputs": [
+        "{workspaceRoot}/packages/prettier-plugin-apex/vendor/apex-ast-serializer",
+        "{projectRoot}/server/build"
+      ],
+      "options": {
+        "cwd": "packages/apex-ast-serializer",
+        "command": "node tools/run-gradle.mjs clean :server:installDist"
+      }
+    },
+    "build:native": {
+      "executor": "nx:run-commands",
+      "inputs": ["gradle", "default"],
+      "outputs": ["{projectRoot}/parser/build"],
+      "options": {
+        "cwd": "packages/apex-ast-serializer",
+        "command": "node tools/run-gradle.mjs clean :parser:buildNative"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/apex-ast-serializer",
+        "command": "node tools/run-gradle.mjs clean test"
+      }
+    },
+    "prettier": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm prettier --write 'packages/apex-ast-serializer/**/*.{java,md}'"
+      }
+    }
+  }
+}

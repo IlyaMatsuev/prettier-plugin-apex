@@ -1,4 +1,55 @@
-# 3.0.0
+# 2.1.4
+
+## Internal Changes
+
+- Fix `install-apex-executables` script hanging unnecessarily ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/1368)).
+- Prettier Apex should now throw an error with details when it fails to call Apex AST Serializer executable.
+- NPM package tests are now run on multiple platforms to catch any platform-dependent regressions.
+- Use relative path to binary files to avoid issues with special characters in Windows path.
+
+# 2.1.3
+
+- Spawn Apex AST Serializer server process with shell turned on (missed in `v2.1.2`).
+  Thanks to @mwcm for their contribution!
+
+# 2.1.2
+
+- Spawn Apex AST Serializer process with shell turned on.
+  This is a workaround for new version of NodeJS that disallows calling `.bat` file without this option.
+  See this [blog post](https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2) for more details
+  ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/1347)).
+  Thanks to @mwcm for their contribution!
+
+## Internal Changes
+
+- Native executable location has been moved to be under the `vendor` directory.
+  This should not affect any usage of the library,
+  unless you are referencing this location from a custom script.
+- Our internal testing structure has changed.
+  Please follow [CONTRIBUTING.md](CONTRIBUTING.md) to set up your environment again.
+
+# 2.1.1
+
+- Fix native executable not having generated with enough reflection metadata ([issue](https://github.com/dangmai/prettier-plugin-apex/issues/1335)).
+
+# 2.1.0
+
+- Add support for Null Coalescing Expression ([doc](https://help.salesforce.com/s/articleView?id=release-notes.rn_apex_NullCoalescingOper.htm&release=248&type=5)).
+- Add experimental support for using native executables to speed up parsing Apex code. Follow the [documentation](https://github.com/dangmai/prettier-plugin-apex?tab=readme-ov-file#-using-native-executables-experimental) to try it out, and please report any issues you encounter.
+
+## Internal Changes
+
+- Use `pnpm` for internal dependency management instead of `yarn`. If you forked this repository before this change, make sure to follow [CONTRIBUTING.md](CONTRIBUTING.md) to set up your environment again.
+- This repository is now a monorepo (managed by [nx](https://nx.dev/)), containing all packages related to this project. This change should not affect normal usage of the library, but if you are maintaining a fork of this library, please make sure to update your workflow accordingly.
+- Our new [Playground](https://apex.dangmai.net) has been published, allowing users to try out Prettier Apex without installing anything.
+- Allow user to customize the secret used to shut down the parsing server.
+- Allow user to specify the protocol (HTTP/HTTPS) that the parsing server uses.
+
+# 2.0.1
+
+- This is a fix version that includes the correct Production bundle. Please refer to the [2.0.0](#200) changes for actual change notes.
+
+# 2.0.0
 
 Please follow [this guide](https://github.com/dangmai/prettier-plugin-apex/wiki/Upgrading-to-Prettier-Apex-v2) to upgrade Prettier Apex to this new major version.
 
