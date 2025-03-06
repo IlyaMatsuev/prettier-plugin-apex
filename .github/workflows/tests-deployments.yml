@@ -14,41 +14,41 @@ jobs:
       fail-fast: false
       matrix:
         node:
+          - "22"
           - "20"
-          - "19"
           - "18"
         java:
+          - "21"
           - "17"
           - "11"
         include:
           - node: "18"
             java: "11"
-            ENABLE_CODE_COVERAGE: true
+            ENABLE_CODE_COVERAGE: false
             ENABLE_INTEGRATION_TESTS: true
-            ENABLE_DEPLOYMENT: false
-          - node: "18"
-            java: "17"
-            ENABLE_PACKAGE_TESTS: true
     env:
       ENABLE_CODE_COVERAGE: ${{ matrix.ENABLE_CODE_COVERAGE }}
-      RUN_INTEGRATION_TESTS: ${{ matrix.ENABLE_INTEGRATION_TESTS && (github.event_name == 'schedule' || github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags') || github.event_name == 'pull_request') }}
-      RUN_PACKAGE_TESTS: ${{ matrix.ENABLE_PACKAGE_TESTS && (github.event_name == 'schedule' || github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch') }}
-      RUN_DEPLOYMENT: ${{ matrix.ENABLE_DEPLOYMENT && startsWith(github.ref, 'refs/tags') }}
+      RUN_INTEGRATION_TESTS: ${{ matrix.ENABLE_INTEGRATION_TESTS && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags')) }}
     name: Run tests on NodeJS ${{ matrix.node }} and Java ${{ matrix.java }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4.0.1
+        uses: actions/setup-node@v4.2.0
         with:
           node-version: ${{ matrix.node }}
+          cache: pnpm
 
-      - uses: actions/setup-java@v3
+      - uses: actions/setup-java@v4.7.0
         with:
-          distribution: "adopt"
+          distribution: temurin
           java-version: ${{ matrix.java }}
+          cache: gradle
 
       # Starting with Node 17, DNS is resolved by order that the resolver
       # returns it. In Github Actions environment, there is a loopback IP
@@ -58,20 +58,37 @@ jobs:
         run: sudo sed -Ei '/(^::1)/d' /etc/hosts
 
       - name: Install dependencies
-        run: yarn install
+        run: pnpm install --frozen-lockfile
+
+      - name: Test Apex AST Serializer
+        run: pnpm nx run apex-ast-serializer:test
+
+      - name: Upload Apex AST Serializer code coverage
+        if: matrix.ENABLE_CODE_COVERAGE
+        uses: codecov/codecov-action@v5
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: apex-ast-serializer
+          directory: packages/apex-ast-serializer
 
       - name: Run Apex parsing server
-        run: nohup yarn run start-server &
+        run: pnpm nx run prettier-plugin-apex:start-server &
 
       - name: Wait for Apex parsing server to be up
-        run: yarn run wait-server
+        run: pnpm nx run prettier-plugin-apex:wait-server
 
       - name: Run functional tests
-        run: AST_COMPARE=true yarn test:standalone
+        run: AST_COMPARE=true pnpm nx run prettier-plugin-apex:test:parser:built-in
 
-      - name: Upload code coverage
+      - name: Upload Prettier Plugin Apex code coverage
         if: matrix.ENABLE_CODE_COVERAGE
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prettier-plugin-apex
+          directory: packages/prettier-plugin-apex
 
       - name: Install integration test suite dependencies
         if: env.RUN_INTEGRATION_TESTS == 'true'
@@ -79,40 +96,202 @@ jobs:
 
       # This step is needed because integration tests rely on the
       # existence of the compiled JS, as they are run using Node
-      # instead of ts-node
+      # instead of tsx
       - name: Build the project
         if: env.RUN_INTEGRATION_TESTS == 'true'
-        run: yarn build
+        run: pnpm nx run prettier-plugin-apex:build:dev
 
       - name: Run integration tests
         if: env.RUN_INTEGRATION_TESTS == 'true'
-        run: ./tests_integration/format/run-integration-tests.sh
+        run: ./packages/prettier-plugin-apex/tests_integration/format/run-integration-tests.sh
 
+  package-tests:
+    name: Test latest Prettier Apex package
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-14
+          - macos-13
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.1.0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.2.0
+        with:
+          node-version: "18"
+          cache: pnpm
+      - uses: actions/setup-java@v4.7.0
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
       - name: Run package tests
-        if: env.RUN_PACKAGE_TESTS == 'true'
-        run: ./tests_integration/package/run-package-tests.sh
+        run: pnpm nx run prettier-plugin-apex:test:package
 
-      # npm-publish no longer automatically runs `prepack`, so we have to build
-      # the Prod bundle manually here
-      - name: Build Production bundle
-        if: env.RUN_DEPLOYMENT == 'true'
-        run: yarn build:prod
-
-      - name: Deploy to NPM
-        if: env.RUN_DEPLOYMENT == 'true'
-        uses: JS-DevTools/npm-publish@v3
+  build-native-executables:
+    name: Build Native Executables
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags')
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-14
+          - macos-13
+          - windows-latest
+        include:
+          - os: windows-latest
+            ASSET_NAME: apex-ast-serializer.exe
+            OUTPUT_NAME: apex-ast-serializer-win32-x64.exe
+            ARTIFACT_NAME: apex-ast-serializer-win32-x64.exe
+          - os: ubuntu-latest
+            ASSET_NAME: apex-ast-serializer
+            OUTPUT_NAME: apex-ast-serializer-linux-x64
+            ARTIFACT_NAME: apex-ast-serializer-linux-x64
+          # macOS 14 and above are ARM64 by default, see this link for more info:
+          # https://github.com/actions/runner-images?tab=readme-ov-file#available-images
+          - os: macos-14
+            ASSET_NAME: apex-ast-serializer
+            OUTPUT_NAME: apex-ast-serializer-darwin-arm64
+            ARTIFACT_NAME: apex-ast-serializer-darwin-arm64
+          - os: macos-13
+            ASSET_NAME: apex-ast-serializer
+            OUTPUT_NAME: apex-ast-serializer-darwin-x64
+            ARTIFACT_NAME: apex-ast-serializer-darwin-x64
+    env:
+      ASSET_NAME: ${{ matrix.ASSET_NAME }}
+      OUTPUT_NAME: ${{ matrix.OUTPUT_NAME }}
+      ARTIFACT_NAME: ${{ matrix.ARTIFACT_NAME }}
+      UPLOAD_ARTIFACTS: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags') }}
+      OS: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: ./packages/apex-ast-serializer
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.1.0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.2.0
         with:
-          token: ${{ secrets.NPM_TOKEN }}
-
-      - name: Create Release
-        if: env.RUN_DEPLOYMENT == 'true'
-        uses: actions/create-release@v1
+          node-version: 18
+          cache: pnpm
+      - name: Set up JDK
+        uses: graalvm/setup-graalvm@v1.2.4.1
+        with:
+          java-version: "23"
+          distribution: "graalvm"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Restore NX cache
+        id: nx-cache-restore
+        uses: actions/cache/restore@v4.2.2
+        with:
+          path: |
+            .nx
+          key: ${{ matrix.os }}-nx-build-native-${{ hashFiles('packages/apex-ast-serializer/parser/**/*.java', 'packages/apex-ast-serializer/parser/**/*.properties', 'packages/apex-ast-serializer/parser/build.gradle', 'packages/apex-ast-serializer/libs/*.jar', 'packages/apex-ast-serializer/tools/build-native-binary.mjs') }}
+      - name: Build Linux musl toolchain
+        if: matrix.os == 'ubuntu-latest'
+        run: pnpm nx run apex-ast-serializer:build:musl
+      - name: Build native executable
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+          # https://nx.dev/troubleshooting/unknown-local-cache
+          NX_REJECT_UNKNOWN_LOCAL_CACHE: "false"
+          # We're using Legacy Cache for now, because there's no way to reject
+          # unknown local cache in the DB cache system as of now.
+          # The new DB Cache system uses machine-id as the SQLite DB name,
+          # and when run on different hosts, it will create a new DB, and forego
+          # using existing items in the cache.
+          # See this code here: https://github.com/nrwl/nx/blob/62f58ebfee37c6ef45422e5197a120d396d41922/packages/nx/src/native/machine_id/mod.rs#L3
+          # In the future we may be able to spoof machine-id to keep it consistent
+          # between runs. See this link on the Rust docs for the source of machine-id:
+          # https://docs.rs/machine-uid/latest/machine_uid/
+          NX_DB_CACHE: "false"
+        run: pnpm nx run apex-ast-serializer:build:native
+      - name: Save NX Cache
+        uses: actions/cache/save@v4.2.2
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
+          path: |
+            .nx
+          key: ${{ steps.nx-cache-restore.outputs.cache-primary-key }}
+      - name: Rename executable
+        run: mv parser/build/native/nativeCompile/${{ env.ASSET_NAME }} parser/build/native/nativeCompile/${{ env.OUTPUT_NAME }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.OUTPUT_NAME }}
+          path: packages/apex-ast-serializer/parser/build/native/nativeCompile/${{ env.OUTPUT_NAME }}
 
-      - name: Stop Apex parsing server
-        if: ${{ always() }}
-        run: yarn run stop-server
+  release-to-registry:
+    runs-on: ubuntu-latest
+    name: Release to Registry
+    if: startsWith(github.ref, 'refs/tags')
+    needs:
+      - functional-tests
+      - build-native-executables
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.2.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: actions/setup-java@v4.7.0
+        with:
+          distribution: temurin
+          java-version: 11
+          cache: gradle
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the project
+        run: pnpm run build
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/artifacts
+          pattern: apex-ast-serializer-*
+          merge-multiple: true
+
+      - name: Copy artifacts to correct packages
+        run: pnpm run install:native:ci /tmp/artifacts
+
+      - name: Set publishing config
+        run: pnpm config set '//registry.npmjs.org/:_authToken' "${NODE_AUTH_TOKEN}"
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+
+      - name: Check if prerelease
+        id: check_prerelease
+        continue-on-error: true
+        run: pnpm tsx scripts/check-prerelease.zx.mts
+
+      - name: Deploy packages
+        if: steps.check_prerelease.outcome == 'success'
+        run: pnpm --filter "prettier-plugin-apex" --filter "@prettier-apex/*" publish --no-git-checks --access public
+
+      - name: Deploy pre-release packages
+        if: steps.check_prerelease.outcome != 'success'
+        run: pnpm --filter "prettier-plugin-apex" --filter "@prettier-apex/*" publish --tag next --no-git-checks --access public
+
+      - name: Create GitHub Release
+        if: steps.check_prerelease.outcome == 'success'
+        uses: softprops/action-gh-release@v2

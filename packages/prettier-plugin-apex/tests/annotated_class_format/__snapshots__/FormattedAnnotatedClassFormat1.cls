@@ -1,0 +1,3 @@
+@IsTest
+class AnnotatedClassFormat {
+}

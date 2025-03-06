@@ -1,0 +1,4 @@
+packages:
+  - "packages/playground"
+  - "packages/prettier-plugin-apex/"
+  - "packages/@prettier-apex/*"

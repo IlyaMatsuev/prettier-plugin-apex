@@ -1,0 +1,27 @@
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["/renovate.json5"],
+      "url": "https://docs.renovatebot.com/renovate-schema.json"
+    },
+    {
+      "fileMatch": ["/.vscode/settings.default.json"],
+      "url": "vscode://schemas/settings/folder"
+    }
+  ],
+  "npm.packageManager": "pnpm",
+  "editor.formatOnSave": true,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "eslint.workingDirectories": [
+    "./packages/playground",
+    "./packages/prettier-plugin-apex"
+  ],
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.gradle.buildServer.enabled": "on",
+  "gradle.nestedProjects": true,
+  "vitest.rootConfig": "packages/prettier-plugin-apex/vite.config.ts",
+  "vitest.nodeEnv": {
+    "AST_COMPARE": "1",
+    "APEX_PARSER": "built-in"
+  }
+}
