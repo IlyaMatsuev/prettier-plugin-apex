@@ -21,3 +21,11 @@ packages/@prettier-apex/apex-ast-serializer*/apex-ast-serializer*
 .pnpm-store
 .DS_Store
 *.log
+
+# Added by Illuminated Cloud
+.localdev/
+/IlluminatedCloud/
+target/
+/.illuminatedCloud/
+**/tsconfig*.json
+**/*.tsbuildinfo

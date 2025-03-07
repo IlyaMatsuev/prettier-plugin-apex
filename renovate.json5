@@ -1,6 +1,6 @@
 {
   extends: ["config:recommended"],
-  assignees: ["dangmai"],
+  assignees: ["IlyaMatsuev"],
   platformAutomerge: true,
   automergeType: "pr",
   automergeStrategy: "squash",
