@@ -1,3 +1,7 @@
+# 3.1.2
+
+- Fix wrongly published npm package
+
 # 3.1.0
 
 - All changes and fixes from the [upstream repository](https://github.com/dangmai/prettier-plugin-apex/blob/master/CHANGELOG.md), starting from version `2.0.0`

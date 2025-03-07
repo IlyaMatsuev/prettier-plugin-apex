@@ -1,7 +1,7 @@
 {
-  "name": "prettier-plugin-apex",
-  "version": "2.2.4",
-  "description": "Salesforce Apex plugin for Prettier",
+  "name": "@ilyamatsuev/prettier-plugin-apex",
+  "version": "3.1.2",
+  "description": "Salesforce Apex plugin for Prettier (Fork of dangmai/prettier-plugin-apex with some formatting adjustments) [Not Opinionated]",
   "type": "module",
   "exports": "./dist/src/index.js",
   "browser": "dist/src/standalone.umd.cjs",
@@ -41,7 +41,7 @@
     "apex",
     "prettier"
   ],
-  "author": "Dang Mai <contact@dangmai.net>",
+  "author": "Ilya Matsuev",
   "license": "MIT",
   "devDependencies": {
     "@types/wait-on": "5.3.4",
