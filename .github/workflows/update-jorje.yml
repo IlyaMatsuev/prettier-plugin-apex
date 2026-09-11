@@ -13,17 +13,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v7
+      # Opening the PR needs PERSONAL_TOKEN. It's absent on contributor forks,
+      # so resolve it: fail on the canonical repo, skip (with a warning) on a
+      # fork, where this maintenance workflow has nothing useful to do anyway.
+      - name: Resolve personal token
+        id: pr_secret
+        uses: ./.github/actions/resolve-secret
+        with:
+          name: PERSONAL_TOKEN
+          value: ${{ secrets.PERSONAL_TOKEN }}
       - name: Set up JDK
-        uses: actions/setup-java@v4.7.0
+        uses: actions/setup-java@v6.0.0
         with:
           distribution: temurin
-          java-version: 11
+          java-version: 17
           cache: gradle
       - name: Run create-jorje-jar.sh
         run: ./packages/apex-ast-serializer/tools/create-jorje-jar.sh
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7.0.8
+        if: steps.pr_secret.outputs.available == 'true'
+        uses: peter-evans/create-pull-request@v8.1.1
         with:
           commit-message: Updated jorje
           title: "Update jorje dependency"

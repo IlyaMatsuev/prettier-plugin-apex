@@ -1,3 +1,16 @@
+# 3.2.0
+
+- All changes and fixes from the [upstream repository](https://github.com/dangmai/prettier-plugin-apex/blob/main/CHANGELOG.md), up to and including version `2.3.0`. Highlights:
+  - Support Apex multiline string literals (`'''...'''`).
+  - Support the SOQL `FORMULA('...')` function in `WHERE` clauses and the SOQL `WITH Identifier(key = value, ...)` form.
+  - Multiple comment placement and `prettier-ignore` fixes.
+  - Improved parsing performance (AST post-processing, code-generated serializer, faster native executable startup).
+
+## Dependency Changes
+
+- Drop support for NodeJS < 22.
+- Drop support for Java < 17.
+
 # 3.1.2
 
 - Fix wrongly published npm package

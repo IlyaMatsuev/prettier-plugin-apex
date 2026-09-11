@@ -2,3 +2,16 @@ packages:
   - "packages/playground"
   - "packages/prettier-plugin-apex/"
   - "packages/@prettier-apex/*"
+
+allowBuilds:
+  esbuild: true
+  nx: true
+
+# Single source of truth for the prettier version. Every workspace package that
+# needs prettier depends on `catalog:`, including the plugin itself - its
+# `prettier` peer would otherwise resolve independently and could lag the
+# version we test against, so a Renovate prettier bump would not actually be
+# exercised by the test suite (see the 3.9.0 comment.placement regression,
+# which merged green for exactly this reason).
+catalog:
+  prettier: 3.9.6

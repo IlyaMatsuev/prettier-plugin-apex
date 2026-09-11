@@ -1,7 +1,16 @@
 {
   "name": "@ilyamatsuev/prettier-plugin-apex",
-  "version": "3.1.2",
+  "version": "3.2.0",
   "description": "Salesforce Apex plugin for Prettier (Fork of dangmai/prettier-plugin-apex with some formatting adjustments) [Not Opinionated]",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IlyaMatsuev/prettier-plugin-apex.git",
+    "directory": "packages/prettier-plugin-apex"
+  },
+  "homepage": "https://github.com/IlyaMatsuev/prettier-plugin-apex#readme",
+  "bugs": {
+    "url": "https://github.com/IlyaMatsuev/prettier-plugin-apex/issues"
+  },
   "type": "module",
   "exports": "./dist/src/index.js",
   "browser": "dist/src/standalone.umd.cjs",
@@ -25,13 +34,13 @@
     "clean": "del-cli node_modules dist",
     "pretest": "pnpm run lint",
     "test": "vitest run",
-    "test:parser:built-in": "cross-env APEX_PARSER=built-in pnpm test",
-    "test:parser:native": "cross-env APEX_PARSER=native pnpm test",
     "test:package": "tsx tests_integration/package/run-package-tests.zx.mts",
-    "start-server": "tsx bin/start-apex-server.ts -h 0.0.0.0 -c '*'",
+    "benchmark": "tsx tests_perf/setup.ts",
+    "benchmark:core": "tsx tests_perf/run.ts",
+    "start-server": "tsx bin/start-apex-server.ts -h 0.0.0.0 -c http://localhost:5173",
     "wait-server": "wait-on --timeout 300000 http://localhost:2117/api/ast/",
     "stop-server": "tsx bin/stop-apex-server.ts",
-    "lint": "eslint \"{src,bin,tests_config}/**/*.{js,ts}\"",
+    "lint": "biome lint ./src ./bin ./tests_config ./tests_perf",
     "prettier": "prettier --write \"{bin,src,playground,tests_config}/**/*.{js,mjs,ts,tsx,css,html}\" \"./*.{md,mjs,ts}\"",
     "prepack": "pnpm run build",
     "debug-check:native": "prettier --no-config --apex-standalone-parser native --debug-check --plugin=./dist/src/index.js",
@@ -44,17 +53,19 @@
   "author": "Ilya Matsuev",
   "license": "MIT",
   "devDependencies": {
+    "@inquirer/prompts": "^8.5.2",
     "@types/wait-on": "5.3.4",
-    "@vitest/coverage-v8": "3.0.7",
-    "vite": "6.2.0",
-    "vitest": "3.0.7"
+    "@vitest/coverage-v8": "5.0.0",
+    "prettier": "catalog:",
+    "vite": "8.2.2",
+    "vitest": "5.0.0"
   },
   "peerDependencies": {
     "prettier": "^3.0.0"
   },
   "dependencies": {
-    "jest-docblock": "^29.0.0",
-    "wait-on": "^8.0.0"
+    "jest-docblock": "^30.0.0",
+    "wait-on": "^9.0.0"
   },
   "optionalDependencies": {
     "@prettier-apex/apex-ast-serializer-darwin-arm64": "workspace:*",
@@ -63,6 +74,7 @@
     "@prettier-apex/apex-ast-serializer-win32-x64": "workspace:*"
   },
   "nx": {
+    "name": "prettier-plugin-apex",
     "implicitDependencies": [
       "apex-ast-serializer"
     ],
@@ -76,23 +88,34 @@
         ],
         "cache": false
       },
-      "test:parser:built-in": {
+      "test:parser": {
         "dependsOn": [
           "build:dev"
         ],
         "outputs": [
           "{projectRoot}/coverage"
         ],
-        "cache": false
-      },
-      "test:parser:native": {
-        "dependsOn": [
-          "build:dev"
-        ],
-        "outputs": [
-          "{projectRoot}/coverage"
-        ],
-        "cache": false
+        "cache": false,
+        "executor": "nx:run-commands",
+        "options": {
+          "cwd": "{projectRoot}",
+          "command": "pnpm test",
+          "env": {
+            "APEX_PARSER": "built-in"
+          }
+        },
+        "configurations": {
+          "built-in": {
+            "env": {
+              "APEX_PARSER": "built-in"
+            }
+          },
+          "native": {
+            "env": {
+              "APEX_PARSER": "native"
+            }
+          }
+        }
       },
       "build:dev": {
         "dependsOn": [

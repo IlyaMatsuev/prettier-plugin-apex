@@ -1,10 +1,10 @@
 buildscript {
   dependencies {
     // https://mvnrepository.com/artifact/cz.habarta.typescript-generator/typescript-generator-gradle-plugin
-    classpath group: 'cz.habarta.typescript-generator', name: 'typescript-generator-gradle-plugin', version: '3.2.1263'
+    classpath("cz.habarta.typescript-generator:typescript-generator-gradle-plugin:4.1.1")
 
     // https://mvnrepository.com/artifact/org.apache.groovy/groovy-json
-    classpath group: 'org.apache.groovy', name: 'groovy-json', version: '4.0.26'
+    classpath("org.apache.groovy:groovy-json:5.1.2")
   }
 }
 
@@ -14,6 +14,7 @@ plugins {
   id 'jacoco'
 }
 apply plugin: 'cz.habarta.typescript-generator'
+apply from: '../jorje-discovery.gradle'
 
 sourceSets {
   test{
@@ -28,12 +29,9 @@ sourceSets {
 task parserStartScripts(type: CreateStartScripts) {
   mainClass.set('net.dangmai.serializer.Apex')
   applicationName = 'apex-ast-serializer'
-  defaultJvmOpts = [
-    "--add-opens=java.base/java.lang=ALL-UNNAMED",
-    "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
-    "--add-opens=java.base/java.util=ALL-UNNAMED",
-    "--add-opens=java.base/java.text=ALL-UNNAMED"
-  ]
+  // The reflection-free generated serializer needs no module opens; the old
+  // --add-opens existed solely for XStream.
+  defaultJvmOpts = []
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
 }
@@ -41,15 +39,24 @@ task parserStartScripts(type: CreateStartScripts) {
 application {
   mainClass.set("net.dangmai.serializer.server.HttpServer")
   applicationName = "apex-ast-serializer-http"
-  applicationDefaultJvmArgs = [
-    "--add-opens=java.base/java.lang=ALL-UNNAMED",
-    "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
-    "--add-opens=java.base/java.util=ALL-UNNAMED",
-    "--add-opens=java.base/java.text=ALL-UNNAMED"
-  ]
+  applicationDefaultJvmArgs = []
   applicationDistribution.into("bin") {
     from(parserStartScripts)
-    fileMode = 0755
+    filePermissions {
+      user {
+        read = true
+        write = true
+        execute = true
+      }
+      group {
+        read = true
+        write = true
+      }
+      other {
+        read = true
+        write = true
+      }
+    }
   }
 
   applicationDistribution.from("build/typings") {
@@ -58,11 +65,13 @@ application {
 }
 
 java {
-  group 'net.dangmai'
+  group = 'net.dangmai'
   version = new groovy.json.JsonSlurper().parse(file('../../../package.json')).version
 
-  sourceCompatibility = JavaVersion.VERSION_11
-  targetCompatibility = JavaVersion.VERSION_11
+  // We can't use Gradle's "release" feature because of this bug with GraalVM native build tools:
+  // https://github.com/oracle/graal/issues/7414
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
 }
 
 processResources {
@@ -113,11 +122,12 @@ distZip {
   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
   archiveFileName = "apex-ast-serializer.zip"
 }
-distZip.dependsOn generateTypeScript
+distTar.dependsOn tasks.named("generateTypeScript")
+distZip.dependsOn tasks.named("generateTypeScript")
 installDist {
   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
-installDist.dependsOn generateTypeScript
+installDist.dependsOn tasks.named("generateTypeScript")
 installDist.destinationDir = file("../../prettier-plugin-apex/vendor/apex-ast-serializer")
 
 jar {
@@ -125,48 +135,41 @@ jar {
 }
 
 ext {
-  slf4jVersion = '2.0.17'
-  jettyVersion = '11.0.24'
-  jerseyVersion = '3.1.10'
-  junitVersion = '5.12.0'
+  slf4jVersion = '2.0.19'
+  jettyVersion = '12.1.13'
+  jerseyVersion = '4.0.2'
+  junitVersion = '6.1.3'
 }
 
 dependencies {
   implementation project(':parser')
   testImplementation(testFixtures(project(":parser")))
 
-  implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
-  implementation "org.slf4j:slf4j-api:${slf4jVersion}"
-  implementation "org.slf4j:slf4j-simple:${slf4jVersion}"
-  implementation "org.eclipse.jetty:jetty-server:${jettyVersion}"
-  implementation "org.eclipse.jetty:jetty-servlet:${jettyVersion}"
-  implementation "org.eclipse.jetty:jetty-servlets:${jettyVersion}"
-  implementation "org.glassfish.jersey.core:jersey-server:${jerseyVersion}"
-  implementation "org.glassfish.jersey.containers:jersey-container-servlet-core:${jerseyVersion}"
-  // The next time we bump jersey major version, we will need to change the package
-  // here back to org.glassfish.jersey.containers:jersey-container-jetty-http.
-  // The current package is a workaround for 3.1.5 to work specifically with
-  // Jetty 11. See this issue for more detail:
-  // https://github.com/eclipse-ee4j/jersey/issues/5483
-  implementation "org.glassfish.jersey.containers:jersey-container-jetty11-http:${jerseyVersion}"
-  implementation("org.glassfish.jersey.media:jersey-media-json-jackson:${jerseyVersion}") {
-    exclude(module: 'byte-buddy') // Workaround https://github.com/FasterXML/jackson-databind/issues/4428 until Jackson 2.17.1
-  }
-  implementation "org.glassfish.jersey.inject:jersey-hk2:${jerseyVersion}"
+  implementation("javax.xml.bind:jaxb-api:2.3.1")
+  implementation("org.slf4j:slf4j-api:${slf4jVersion}")
+  implementation("org.slf4j:slf4j-simple:${slf4jVersion}")
+  implementation("org.eclipse.jetty:jetty-server:${jettyVersion}")
+  implementation("org.eclipse.jetty.ee10:jetty-ee10-servlet:${jettyVersion}")
+  implementation("org.eclipse.jetty.ee10:jetty-ee10-servlets:${jettyVersion}")
+  implementation("org.glassfish.jersey.core:jersey-server:${jerseyVersion}")
+  implementation("org.glassfish.jersey.containers:jersey-container-servlet:${jerseyVersion}")
+  implementation("org.glassfish.jersey.containers:jersey-container-jetty-http:${jerseyVersion}")
+  implementation("org.glassfish.jersey.media:jersey-media-json-jackson:${jerseyVersion}")
+  implementation("org.glassfish.jersey.inject:jersey-hk2:${jerseyVersion}")
 
   // https://mvnrepository.com/artifact/jakarta.activation/jakarta.activation-api
-  implementation group: 'jakarta.activation', name: 'jakarta.activation-api', version: '2.1.3'
+  implementation("jakarta.activation:jakarta.activation-api:2.1.4")
 
   // https://mvnrepository.com/artifact/org.glassfish.jaxb/jaxb-runtime
-  implementation group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: '4.0.5'
+  implementation("org.glassfish.jaxb:jaxb-runtime:4.0.9")
 
   // https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api
-  testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${junitVersion}"
-  testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: "${junitVersion}"
-  testRuntimeOnly group: 'org.junit.platform', name: 'junit-platform-launcher', version: '1.12.0'
+  testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
+  testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.3")
 
   // https://mvnrepository.com/artifact/cz.habarta.typescript-generator/typescript-generator-core
-  compileOnly group: 'cz.habarta.typescript-generator', name: 'typescript-generator-core', version: '3.2.1263'
+  compileOnly("cz.habarta.typescript-generator:typescript-generator-core:4.1.1")
 }
 
 test {
@@ -182,22 +185,11 @@ jacocoTestReport {
 
 generateTypeScript {
   jsonLibrary = 'jackson2'
-  classes = [
-    'apex.jorje.semantic.compiler.parser.ParserOutput',
-  ]
-  classPatterns = [
-    'apex.jorje.data.**',
-    'apex.jorje.parser.impl.HiddenToken**',
-  ]
-  excludeClassPatterns = [
-    'apex.jorje.**$MatchBlock',
-    'apex.jorje.**$MatchBlockWithDefault',
-    'apex.jorje.**$SwitchBlock',
-    'apex.jorje.**$SwitchBlockWithDefault',
-    'apex.jorje.**$Visitor',
-    'apex.jorje.**Factory',
-    'apex.jorje.**Decorator',
-  ]
+  // Discovery patterns come from the shared ../jorje-discovery.gradle so they
+  // can't drift from the serializer-generator.
+  classes = jorjeDiscovery.classes
+  classPatterns = jorjeDiscovery.classPatterns
+  excludeClassPatterns = jorjeDiscovery.excludeClassPatterns
   customTypeNaming = [
     'apex.jorje.data.ast.Expr$LiteralExpr:ExprLiteralExpr',
     'apex.jorje.data.soql.QueryExpr$LiteralExpr:QueryExprLiteralExpr',
@@ -209,7 +201,8 @@ generateTypeScript {
     'net.dangmai.serializer.types.CustomEnumExtension',
     'net.dangmai.serializer.types.CustomFieldExtension',
     'net.dangmai.serializer.types.UnionTypeExtension',
-    'net.dangmai.serializer.types.GenericNodeExtension',
+    'net.dangmai.serializer.types.ApexNodeUnionExtension',
+    'net.dangmai.serializer.types.JorjeOptionalExtension',
   ]
   sortDeclarations = true
   noFileComment = true
