@@ -1,7 +1,8 @@
 {
-  "name": "@ilyamatsuev/prettier-plugin-apex",
-  "version": "3.2.0",
-  "description": "Salesforce Apex plugin for Prettier (Fork of dangmai/prettier-plugin-apex with some formatting adjustments) [Not Opinionated]",
+  "name": "monorepo-prettier-plugin-apex",
+  "version": "3.2.1",
+  "private": true,
+  "description": "Monorepo for the Prettier Apex fork (@ilyamatsuev/prettier-plugin-apex)",
   "main": "index.js",
   "scripts": {
     "build": "nx run-many -t build",

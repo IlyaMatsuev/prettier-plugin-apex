@@ -1,6 +1,6 @@
 {
   "name": "@ilyamatsuev/prettier-plugin-apex",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "Salesforce Apex plugin for Prettier (Fork of dangmai/prettier-plugin-apex with some formatting adjustments) [Not Opinionated]",
   "repository": {
     "type": "git",

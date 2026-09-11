@@ -1,3 +1,7 @@
+# 3.2.1
+
+- Fix wrongly published npm package (`3.2.0` contains the monorepo root instead of the plugin, do not use it).
+
 # 3.2.0
 
 - All changes and fixes from the [upstream repository](https://github.com/dangmai/prettier-plugin-apex/blob/main/CHANGELOG.md), up to and including version `2.3.0`. Highlights:
