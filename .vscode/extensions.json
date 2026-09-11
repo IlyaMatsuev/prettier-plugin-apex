@@ -1,10 +1,12 @@
 {
   "recommendations": [
+    "hverlin.mise-vscode",
+    "nrwl.angular-console",
     "dangmai.workspace-default-settings",
     "esbenp.prettier-vscode",
     "salesforce.salesforcedx-vscode",
     "vitest.explorer",
-    "dbaeumer.vscode-eslint",
+    "biomejs.biome",
     "vscjava.vscode-java-pack",
     "vscjava.vscode-gradle",
     "tintinweb.vscode-decompiler"

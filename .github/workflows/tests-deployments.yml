@@ -7,23 +7,42 @@ on:
     - cron: "0 8 * * *"
   workflow_dispatch:
 
+permissions:
+  # Required for NPM Trusted Publishing OIDC
+  # https://docs.npmjs.com/trusted-publishers#step-2-configure-your-cicd-workflow
+  id-token: write
+
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      musl-script: ${{ steps.filter.outputs.musl-script }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v4.0.3
+        id: filter
+        with:
+          filters: |
+            musl-script:
+              - 'packages/apex-ast-serializer/tools/build-musl-toolchain.sh'
+
   functional-tests:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         node:
+          - "26"
+          - "25"
+          - "24"
           - "22"
-          - "20"
-          - "18"
         java:
+          - "25"
           - "21"
           - "17"
-          - "11"
         include:
-          - node: "18"
-            java: "11"
+          - node: "22"
+            java: "17"
             ENABLE_CODE_COVERAGE: false
             ENABLE_INTEGRATION_TESTS: true
     env:
@@ -33,18 +52,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4.1.0
+        uses: pnpm/action-setup@v6.0.10
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4.2.0
+        uses: actions/setup-node@v7.0.0
         with:
           node-version: ${{ matrix.node }}
           cache: pnpm
 
-      - uses: actions/setup-java@v4.7.0
+      - uses: actions/setup-java@v6.0.0
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
@@ -63,9 +82,20 @@ jobs:
       - name: Test Apex AST Serializer
         run: pnpm nx run apex-ast-serializer:test
 
-      - name: Upload Apex AST Serializer code coverage
+      # Codecov upload needs CODECOV_TOKEN. It's absent on contributor forks,
+      # so resolve once: fail on the canonical repo, skip (with a warning) on a
+      # fork. Both upload steps below gate on the resolved availability.
+      - name: Resolve Codecov token
+        id: codecov_secret
         if: matrix.ENABLE_CODE_COVERAGE
-        uses: codecov/codecov-action@v5
+        uses: ./.github/actions/resolve-secret
+        with:
+          name: CODECOV_TOKEN
+          value: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload Apex AST Serializer code coverage
+        if: matrix.ENABLE_CODE_COVERAGE && steps.codecov_secret.outputs.available == 'true'
+        uses: codecov/codecov-action@v7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -79,11 +109,11 @@ jobs:
         run: pnpm nx run prettier-plugin-apex:wait-server
 
       - name: Run functional tests
-        run: AST_COMPARE=true pnpm nx run prettier-plugin-apex:test:parser:built-in
+        run: AST_COMPARE=true pnpm nx run prettier-plugin-apex:test:parser --configuration built-in
 
       - name: Upload Prettier Plugin Apex code coverage
-        if: matrix.ENABLE_CODE_COVERAGE
-        uses: codecov/codecov-action@v5
+        if: matrix.ENABLE_CODE_COVERAGE && steps.codecov_secret.outputs.available == 'true'
+        uses: codecov/codecov-action@v7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -113,19 +143,26 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
-          - macos-14
-          - macos-13
+          - macos-latest
+          - macos-15-intel
     runs-on: ${{ matrix.os }}
+    # Windows runners default to pwsh, where a broken toolchain can exit 0
+    # having done nothing: that's how the pnpm shim regression stayed green
+    # here for two nights. bash resolves pnpm through a shim that works, and
+    # with -e a command that genuinely fails takes the step down with it.
+    defaults:
+      run:
+        shell: bash
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v7
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4.1.0
+        uses: pnpm/action-setup@v6.0.10
       - name: Setup Node.js
-        uses: actions/setup-node@v4.2.0
+        uses: actions/setup-node@v7.0.0
         with:
-          node-version: "18"
+          node-version: "24"
           cache: pnpm
-      - uses: actions/setup-java@v4.7.0
+      - uses: actions/setup-java@v6.0.0
         with:
           distribution: temurin
           java-version: "17"
@@ -137,13 +174,26 @@ jobs:
 
   build-native-executables:
     name: Build Native Executables
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags')
+    needs: changes
+    # Renovate branches build natively too. A dependency or action bump can
+    # break the toolchain in a way nothing else here would catch: the rest of
+    # PR CI is ubuntu-only, so anything Windows- or macOS-specific sails
+    # through green and only surfaces on the nightly, after automerge.
+    # Matching on ref_name catches the push event on the renovate branch,
+    # which is what branch automerge waits for; those checks show up on the
+    # PR too for the bumps that open one.
+    if: >-
+      github.event_name == 'schedule'
+      || github.event_name == 'workflow_dispatch'
+      || startsWith(github.ref, 'refs/tags')
+      || needs.changes.outputs.musl-script == 'true'
+      || startsWith(github.ref_name, 'renovate/')
     strategy:
       matrix:
         os:
           - ubuntu-latest
-          - macos-14
-          - macos-13
+          - macos-latest
+          - macos-15-intel
           - windows-latest
         include:
           - os: windows-latest
@@ -156,11 +206,11 @@ jobs:
             ARTIFACT_NAME: apex-ast-serializer-linux-x64
           # macOS 14 and above are ARM64 by default, see this link for more info:
           # https://github.com/actions/runner-images?tab=readme-ov-file#available-images
-          - os: macos-14
+          - os: macos-latest
             ASSET_NAME: apex-ast-serializer
             OUTPUT_NAME: apex-ast-serializer-darwin-arm64
             ARTIFACT_NAME: apex-ast-serializer-darwin-arm64
-          - os: macos-13
+          - os: macos-15-intel
             ASSET_NAME: apex-ast-serializer
             OUTPUT_NAME: apex-ast-serializer-darwin-x64
             ARTIFACT_NAME: apex-ast-serializer-darwin-x64
@@ -171,20 +221,32 @@ jobs:
       UPLOAD_ARTIFACTS: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags') }}
       OS: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    # See the note on package-tests: bash so Windows resolves a working pnpm
+    # and a failing command actually fails the step.
     defaults:
       run:
+        shell: bash
         working-directory: ./packages/apex-ast-serializer
     steps:
-      - uses: actions/checkout@v4.2.2
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4.1.0
-      - name: Setup Node.js
-        uses: actions/setup-node@v4.2.0
+      - uses: actions/checkout@v7
+      # NX_KEY enables Nx Cloud distributed caching. It's absent on contributor
+      # forks, so resolve it: fail on the canonical repo (a dropped key should
+      # be loud), and on a fork fall back to a cloud-less build below.
+      - name: Resolve Nx Cloud key
+        id: nx_secret
+        uses: ./.github/actions/resolve-secret
         with:
-          node-version: 18
+          name: NX_KEY
+          value: ${{ secrets.NX_KEY }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6.0.10
+      - name: Setup Node.js
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24
           cache: pnpm
       - name: Set up JDK
-        uses: graalvm/setup-graalvm@v1.2.4.1
+        uses: graalvm/setup-graalvm@v1.6.6
         with:
           java-version: "23"
           distribution: "graalvm"
@@ -195,7 +257,7 @@ jobs:
         run: chmod +x gradlew
       - name: Restore NX cache
         id: nx-cache-restore
-        uses: actions/cache/restore@v4.2.2
+        uses: actions/cache/restore@v6.1.0
         with:
           path: |
             .nx
@@ -203,31 +265,38 @@ jobs:
       - name: Build Linux musl toolchain
         if: matrix.os == 'ubuntu-latest'
         run: pnpm nx run apex-ast-serializer:build:musl
-      - name: Build native executable
         env:
-          # https://nx.dev/troubleshooting/unknown-local-cache
-          NX_REJECT_UNKNOWN_LOCAL_CACHE: "false"
-          # We're using Legacy Cache for now, because there's no way to reject
-          # unknown local cache in the DB cache system as of now.
-          # The new DB Cache system uses machine-id as the SQLite DB name,
-          # and when run on different hosts, it will create a new DB, and forego
-          # using existing items in the cache.
-          # See this code here: https://github.com/nrwl/nx/blob/62f58ebfee37c6ef45422e5197a120d396d41922/packages/nx/src/native/machine_id/mod.rs#L3
-          # In the future we may be able to spoof machine-id to keep it consistent
-          # between runs. See this link on the Rust docs for the source of machine-id:
-          # https://docs.rs/machine-uid/latest/machine_uid/
-          NX_DB_CACHE: "false"
+          NX_KEY: ${{ steps.nx_secret.outputs.available == 'true' && secrets.NX_KEY || '' }}
+          NX_NO_CLOUD: ${{ steps.nx_secret.outputs.available == 'true' && 'false' || 'true' }}
+      - name: Build native executable
         run: pnpm nx run apex-ast-serializer:build:native
+        env:
+          # Needed for Windows; to resolve issue with temp folder during native image build, due to relativization
+          # problem when different drives are used, such as in GHA runners.
+          # https://github.com/graalvm/native-build-tools/issues/754
+          GRADLE_OPTS: -Djava.io.tmpdir=${{ runner.temp }}
+          # With the key present, use Nx Cloud. Without it (fork), disable cloud
+          # so nx doesn't try to decode a missing/empty key and fail.
+          NX_KEY: ${{ steps.nx_secret.outputs.available == 'true' && secrets.NX_KEY || '' }}
+          NX_NO_CLOUD: ${{ steps.nx_secret.outputs.available == 'true' && 'false' || 'true' }}
+      - name: Sanity check native executable
+        run: |
+          ./parser/build/native/nativeCompile/${{ env.ASSET_NAME }} -l ../prettier-plugin-apex/tests/loop/LoopClass.cls > "$RUNNER_TEMP/sanity-check.json"
+          node -e "const fs=require('fs'); JSON.parse(fs.readFileSync(process.argv[1],'utf8')); console.log('Sanity check passed');" "$RUNNER_TEMP/sanity-check.json"
       - name: Save NX Cache
-        uses: actions/cache/save@v4.2.2
+        uses: actions/cache/save@v6.1.0
         with:
           path: |
             .nx
           key: ${{ steps.nx-cache-restore.outputs.cache-primary-key }}
       - name: Rename executable
         run: mv parser/build/native/nativeCompile/${{ env.ASSET_NAME }} parser/build/native/nativeCompile/${{ env.OUTPUT_NAME }}
+      # Renovate branches build to prove the toolchain still works, not to
+      # produce anything. Without this they'd each upload four ~100MB binaries
+      # on every push, and Renovate rebases its branches whenever main moves.
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        if: ${{ !startsWith(github.ref_name, 'renovate/') }}
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: ${{ env.OUTPUT_NAME }}
           path: packages/apex-ast-serializer/parser/build/native/nativeCompile/${{ env.OUTPUT_NAME }}
@@ -236,26 +305,33 @@ jobs:
     runs-on: ubuntu-latest
     name: Release to Registry
     if: startsWith(github.ref, 'refs/tags')
+    permissions:
+      # Required for NPM Trusted Publishing OIDC
+      id-token: write
+      # Required for softprops/action-gh-release to create the GitHub Release
+      contents: write
     needs:
       - functional-tests
       - build-native-executables
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4.1.0
+        uses: pnpm/action-setup@v6.0.10
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4.2.0
+        uses: actions/setup-node@v7.0.0
         with:
-          node-version: 22
+          # Need at least Node 24 for OIDC Trusted Publishing support
+          node-version: 24
           cache: pnpm
+          registry-url: https://registry.npmjs.org
 
-      - uses: actions/setup-java@v4.7.0
+      - uses: actions/setup-java@v6.0.0
         with:
           distribution: temurin
-          java-version: 11
+          java-version: 17
           cache: gradle
 
       - name: Install dependencies
@@ -265,7 +341,7 @@ jobs:
         run: pnpm run build
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8.0.1
         with:
           path: /tmp/artifacts
           pattern: apex-ast-serializer-*
@@ -273,11 +349,6 @@ jobs:
 
       - name: Copy artifacts to correct packages
         run: pnpm run install:native:ci /tmp/artifacts
-
-      - name: Set publishing config
-        run: pnpm config set '//registry.npmjs.org/:_authToken' "${NODE_AUTH_TOKEN}"
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
       - name: Check if prerelease
         id: check_prerelease
@@ -294,4 +365,4 @@ jobs:
 
       - name: Create GitHub Release
         if: steps.check_prerelease.outcome == 'success'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3.0.3

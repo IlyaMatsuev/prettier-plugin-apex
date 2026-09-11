@@ -30,10 +30,14 @@ export default defineConfig({
   },
   test: {
     globals: true,
+    exclude: ["dist/**"],
     testTimeout: 30 * 1000, // It's very slow to run tests with the default parser, so we use a very generous timeout here
     coverage: {
       enabled: ENABLE_COVERAGE,
       include: ["src/**/*.ts"],
+      // perf.ts is benchmark instrumentation, only exercised by the perf
+      // harness (tests_perf) under APEX_PERF rather than by the unit suite.
+      exclude: ["src/perf.ts"],
     },
     setupFiles: ["tests_config/run-spec.ts"],
   },

@@ -5,7 +5,7 @@
 ![license](https://img.shields.io/npm/l/prettier-plugin-apex.svg)
 [![codecov](https://codecov.io/gh/IlyaMatsuev/prettier-plugin-apex/branch/master/graph/badge.svg?token=AAD15HSIB9)](https://codecov.io/gh/IlyaMatsuev/prettier-plugin-apex)
 
-![Prettier Banner](https://raw.githubusercontent.com/prettier/prettier-logo/master/images/prettier-banner-light.png)
+![Prettier Banner](https://unpkg.com/prettier-logo@1.0.3/images/prettier-banner-light.svg)
 
 This is a code formatter for the Apex Programming Language, used on the Salesforce development platform.
 
@@ -30,8 +30,8 @@ The purpose of this fork is to improve the original package. Although, the Prett
 
 ### Requirements
 
-- Node >= 18.11.0
-- Java Runtime Engine >= 11
+- Node >= 22
+- Java Runtime Engine >= 17 _only_ for platforms without prebuilt native executables (Windows x64, Linux x64, macOS ARM64/x64 are provided with native executables)
 
 ### How to use
 

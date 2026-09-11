@@ -1,6 +1,6 @@
 import type { SupportOptions } from "prettier";
 
-import * as jorje from "../vendor/apex-ast-serializer/typings/jorje.d.js";
+import type * as jorje from "../vendor/apex-ast-serializer/typings/jorje.d.js";
 import {
   canAttachComment,
   handleEndOfLineComment,
@@ -15,6 +15,9 @@ import parse from "./parser.js";
 import { hasPragma, insertPragma } from "./pragma.js";
 import printFn from "./printer.js";
 import { massageAstNode } from "./util.js";
+
+// Re-export all jorje AST node types for direct access.
+export type * as jorje from "../vendor/apex-ast-serializer/typings/jorje.d.js";
 
 export const languages = [
   {

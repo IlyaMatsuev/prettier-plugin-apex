@@ -1,11 +1,11 @@
-/* eslint no-param-reassign: 0 */
 import fs from "node:fs/promises";
 import module from "node:module";
 import nodePath from "node:path";
 import * as url from "node:url";
-import { AstPath, Doc } from "prettier";
+import type { AstPath, Doc } from "prettier";
 
-import * as jorje from "../vendor/apex-ast-serializer/typings/jorje.d.js";
+import type * as jorje from "../vendor/apex-ast-serializer/typings/jorje.d.js";
+import { asConcrete, type EnrichedApexNode } from "./jorje-nodes.js";
 import {
   APEX_TYPES,
   DATA_CATEGORY,
@@ -14,8 +14,8 @@ import {
   ORDER_NULL,
   QUERY,
   QUERY_WHERE,
-  STANDARD_APEX_ANNOTATIONS,
   STANDARD_APEX_ANNOTATION_ARG_NAMES,
+  STANDARD_APEX_ANNOTATIONS,
   STANDARD_APEX_TYPES,
 } from "./constants.js";
 
@@ -44,32 +44,65 @@ export type AnnotatedComment = AnnotatedAstNode &
     trailing?: boolean;
     leading?: boolean;
     printed?: boolean;
-    enclosingNode?: any;
-    followingNode?: any;
-    precedingNode?: any;
+    enclosingNode?: EnrichedApexNode;
+    followingNode?: EnrichedApexNode;
+    precedingNode?: EnrichedApexNode;
     placement: string;
   };
 
-export function isBinaryish(node: jorje.Expr): boolean {
+// Exhaustiveness guard for child-handler dispatch. In a `switch` that covers
+// every subtype of an abstract jorje parent, the `default` branch narrows its
+// scrutinee to `never`, so a newly-generated subtype that lacks a case becomes
+// a compile error right here. It also throws at runtime as a backstop for
+// out-of-spec input the type system can't see.
+export function assertNever(value: never): never {
+  throw new Error(`Unhandled subtype: ${value}. Please file a bug report.`);
+}
+
+export function isBinaryish(
+  node: { "@class": string } | null | undefined,
+): node is jorje.BinaryExpr | jorje.BooleanExpr {
   return (
-    node["@class"] === APEX_TYPES.BOOLEAN_EXPRESSION ||
-    node["@class"] === APEX_TYPES.BINARY_EXPRESSION
+    node != null &&
+    (node["@class"] === APEX_TYPES.BOOLEAN_EXPRESSION ||
+      node["@class"] === APEX_TYPES.BINARY_EXPRESSION)
   );
 }
 
 /**
- * Check if this comment is an ApexDoc-style comment.
- * This code is straight from prettier JSDoc detection.
+ * Check if this comment is an ApexDoc-style comment, i.e. a block comment
+ * in which every line between the first and the last starts with `*` (after
+ * leading whitespace). This mirrors prettier's JSDoc detection, but walks
+ * the newlines directly instead of materializing a line array.
  * @param comment the comment to check.
  */
 export function isApexDocComment(comment: jorje.BlockComment): boolean {
-  const lines: string[] = comment.value.split("\n");
-  return (
-    lines.length > 1 &&
-    lines
-      .slice(1, lines.length - 1)
-      .every((commentLine) => commentLine.trim()[0] === "*")
-  );
+  const value = comment.value;
+  let lineStart = value.indexOf("\n");
+  if (lineStart === -1) {
+    return false;
+  }
+  // Local so the global-flag regex's lastIndex state cannot leak between
+  // calls.
+  const nonWhitespace = /\S/g;
+  lineStart += 1;
+  let lineEnd = value.indexOf("\n", lineStart);
+  while (lineEnd !== -1) {
+    // The first non-whitespace character of the line must be an asterisk;
+    // a whitespace-only line disqualifies the comment.
+    nonWhitespace.lastIndex = lineStart;
+    const firstContent = nonWhitespace.exec(value);
+    if (
+      !firstContent ||
+      firstContent.index >= lineEnd ||
+      value[firstContent.index] !== "*"
+    ) {
+      return false;
+    }
+    lineStart = lineEnd + 1;
+    lineEnd = value.indexOf("\n", lineStart);
+  }
+  return true;
 }
 
 /**
@@ -89,8 +122,8 @@ export function isInlineComment(comment: string): boolean {
  * @param filePath The absolute or relative file path
  * @returns true if the source file is for Salesforce trigger
  */
-export function isTriggerSource(filePath: string): boolean {
-  return filePath.endsWith(".trigger");
+export function isTriggerSource(filePath: string | undefined): boolean {
+  return filePath !== undefined && filePath.endsWith(".trigger");
 }
 
 /**
@@ -115,8 +148,8 @@ export function checkIfParentIsDottedExpression(path: AstPath): boolean {
   // We're making an assumption here that `callParent` is always synchronous.
   // We're doing it because FastPath does not expose other ways to find the
   // parent name.
-  let parentNodeName;
-  let grandParentNodeName;
+  let parentNodeName: PropertyKey | null = null;
+  let grandParentNodeName: PropertyKey | null = null;
   path.callParent((innerPath) => {
     parentNodeName = innerPath.getName();
   });
@@ -141,9 +174,59 @@ export function checkIfParentIsDottedExpression(path: AstPath): boolean {
   return result;
 }
 
+/**
+ * Massaging the AST node so that it can be compared. This gets called by
+ * Prettier's internal code
+ * @param ast the Abstract Syntax Tree to compare
+ * @param newObj the newly created object
+ */
+export function massageAstNode(
+  ast: EnrichedApexNode,
+  newObj: Record<string, unknown>,
+): void {
+  // Handling ApexDoc
+  if (ast["@class"] === APEX_TYPES.BLOCK_COMMENT && isApexDocComment(ast)) {
+    newObj["value"] = ast.value.replace(/\s/g, "");
+  }
+  if ("scope" in ast && typeof ast.scope === "string") {
+    // Apex is case insensitivity, but in some case we're forcing the strings
+    // to be uppercase for consistency so the ASTs may be different between
+    // the original and parsed strings.
+    newObj["scope"] = ast.scope.toUpperCase();
+  } else if (
+    "dottedExpr" in ast &&
+    "names" in ast &&
+    ast.dottedExpr.value?.["@class"] === APEX_TYPES.VARIABLE_EXPRESSION
+  ) {
+    // This is a workaround for #38 - jorje sometimes groups names with
+    // spaces as dottedExpr, so we can't compare AST effectively.
+    // In those cases we will bring the dottedExpr out into the names.
+    const clone = newObj as unknown as jorje.VariableExpr;
+    const inner = clone.dottedExpr.value as unknown as jorje.VariableExpr;
+    newObj["names"] = inner.names.concat(clone.names);
+    newObj["dottedExpr"] = inner.dottedExpr;
+  } else if (ast["@class"] === APEX_TYPES.WHERE_COMPOUND_EXPRESSION) {
+    // This flattens the SOQL/SOSL Compound Expression, e.g.:
+    // SELECT Id FROM Account WHERE Name = 'Name' AND (Status = 'Active' AND City = 'Boston')
+    // is equivalent to:
+    // SELECT Id FROM Account WHERE Name = 'Name' AND Status = 'Active' AND City = 'Boston'
+    const clone = newObj as unknown as jorje.WhereCompoundExpr;
+    for (let i = clone.expr.length - 1; i >= 0; i -= 1) {
+      const child = asConcrete(clone.expr[i]!);
+      if (
+        child["@class"] === APEX_TYPES.WHERE_COMPOUND_EXPRESSION &&
+        child.op["@class"] === clone.op["@class"]
+      ) {
+        clone.expr.splice(i, 1, ...child.expr);
+      }
+    }
+  }
+}
+
 // The metadata corresponding to these keys cannot be compared for some reason
-// or another, so we will delete them before the AST comparison
-const METADATA_TO_IGNORE = [
+// or another. Prettier's massage machinery skips them before cloning, so
+// they never appear in the compared AST (and their subtrees are not visited).
+massageAstNode.ignoredProperties = new Set([
   "loc",
   "location",
   "lastNodeLoc",
@@ -159,64 +242,40 @@ const METADATA_TO_IGNORE = [
   "hiddenTokenMap",
   "trailingEmptyLine",
   "forcedHardline",
-];
-
-/**
- * Massaging the AST node so that it can be compared. This gets called by
- * Prettier's internal code
- * @param ast the Abstract Syntax Tree to compare
- * @param newObj the newly created object
- */
-export function massageAstNode(ast: any, newObj: any): any {
-  // Handling ApexDoc
-  if (
-    ast["@class"] &&
-    ast["@class"] === APEX_TYPES.BLOCK_COMMENT &&
-    isApexDocComment(ast)
-  ) {
-    newObj.value = ast.value.replace(/\s/g, "");
-  }
-  if (ast.scope && typeof ast.scope === "string") {
-    // Apex is case insensitivity, but in some case we're forcing the strings
-    // to be uppercase for consistency so the ASTs may be different between
-    // the original and parsed strings.
-    newObj.scope = ast.scope.toUpperCase();
-  } else if (
-    ast.dottedExpr &&
-    ast.dottedExpr.value &&
-    ast.dottedExpr.value.names &&
-    ast.dottedExpr.value["@class"] === APEX_TYPES.VARIABLE_EXPRESSION &&
-    ast.names
-  ) {
-    // This is a workaround for #38 - jorje sometimes groups names with
-    // spaces as dottedExpr, so we can't compare AST effectively.
-    // In those cases we will bring the dottedExpr out into the names.
-    newObj.names = newObj.dottedExpr.value.names.concat(newObj.names);
-    newObj.dottedExpr = newObj.dottedExpr.value.dottedExpr;
-  } else if (
-    ast["@class"] &&
-    ast["@class"] === APEX_TYPES.WHERE_COMPOUND_EXPRESSION
-  ) {
-    // This flattens the SOQL/SOSL Compound Expression, e.g.:
-    // SELECT Id FROM Account WHERE Name = 'Name' AND (Status = 'Active' AND City = 'Boston')
-    // is equivalent to:
-    // SELECT Id FROM Account WHERE Name = 'Name' AND Status = 'Active' AND City = 'Boston'
-    for (let i = newObj.expr.length - 1; i >= 0; i -= 1) {
-      if (
-        newObj.expr[i]["@class"] === APEX_TYPES.WHERE_COMPOUND_EXPRESSION &&
-        newObj.expr[i].op["@class"] === newObj.op["@class"]
-      ) {
-        newObj.expr.splice(i, 1, ...newObj.expr[i].expr);
-      }
-    }
-  }
-  METADATA_TO_IGNORE.forEach((name) => delete newObj[name]);
-}
+]);
 
 /**
  * Helper function to find a character in a string, starting at an index.
  * It will ignore characters that are part of comments.
  */
+// Comments arrive sorted by start index (jorje's hidden token map is keyed
+// by index) and never overlap, so a binary search finds the only comment
+// that could contain the given index. Returns that comment's location, or
+// null when the index is not inside any comment.
+function findContainingCommentLocation(
+  commentNodes: GenericComment[],
+  index: number,
+): { startIndex: number; endIndex: number } | null {
+  let low = 0;
+  let high = commentNodes.length - 1;
+  let candidate = -1;
+  while (low <= high) {
+    const mid = (low + high) >> 1;
+    const location = commentNodes[mid]?.location;
+    if (location && location.startIndex <= index) {
+      candidate = mid;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+  if (candidate === -1) {
+    return null;
+  }
+  const location = commentNodes[candidate]?.location;
+  return location?.endIndex && location.endIndex - 1 >= index ? location : null;
+}
+
 export function findNextUncommentedCharacter(
   sourceCode: string,
   character: string,
@@ -224,29 +283,24 @@ export function findNextUncommentedCharacter(
   commentNodes: GenericComment[],
   backwards = false,
 ): number {
-  let indexFound = false;
-  let index = -1;
-
-  const findIndex = (comment: GenericComment) =>
-    comment.location &&
-    comment.location.startIndex &&
-    comment.location.endIndex &&
-    comment.location.startIndex <= index &&
-    comment.location.endIndex - 1 >= index;
-  while (!indexFound) {
-    if (backwards) {
-      index = sourceCode.lastIndexOf(character, fromIndex);
-    } else {
-      index = sourceCode.indexOf(character, fromIndex);
+  while (true) {
+    const index = backwards
+      ? sourceCode.lastIndexOf(character, fromIndex)
+      : sourceCode.indexOf(character, fromIndex);
+    const containingComment = findContainingCommentLocation(
+      commentNodes,
+      index,
+    );
+    if (!containingComment) {
+      return index;
     }
-    indexFound = commentNodes.filter(findIndex).length === 0;
-    if (backwards) {
-      fromIndex = index - 1;
-    } else {
-      fromIndex = index + 1;
-    }
+    // The match is inside a comment: resume the scan past the entire comment
+    // instead of at the next character, so a comment containing many
+    // occurrences of the target character is skipped in one step.
+    fromIndex = backwards
+      ? containingComment.startIndex - 1
+      : containingComment.endIndex;
   }
-  return index;
 }
 
 // Optimization to look up parent types faster
@@ -365,8 +419,13 @@ export async function getNativeExecutableWithFallback(): Promise<string> {
     );
     const require = module.createRequire(import.meta.url);
     return nodePath.relative(process.cwd(), require.resolve(nativeBin));
-  } catch (e: any) {
-    if ("code" in e && e.code === "MODULE_NOT_FOUND") {
+  } catch (e) {
+    if (
+      typeof e === "object" &&
+      e !== null &&
+      "code" in e &&
+      e.code === "MODULE_NOT_FOUND"
+    ) {
       console.warn(
         `Your platform ${platform}-${arch} is natively supported by Prettier Apex, but the executable cannot be found.`,
       );

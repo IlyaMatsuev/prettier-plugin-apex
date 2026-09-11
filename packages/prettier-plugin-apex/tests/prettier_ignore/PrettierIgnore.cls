@@ -1,4 +1,11 @@
 class PrettierIgnore {
+  // The following node should not be formatted, and should have empty line after it
+  // prettier-ignore
+  Integer result = oneRecord.get('Super Duper Long String That Will Break For Sure') + anotherRecord.get('Another Super Duper Long String That Will Break For Sure');
+
+  // The following node should not be formatted, and should have empty line after it
+  Integer result = oneRecord.get('Super Duper Long String That Will Break For Sure') + anotherRecord.get('Another Super Duper Long String That Will Break For Sure'); // prettier-ignore
+
   public singleLineIgnore() {
     // The following node should not be formatted
     // prettier-ignore
@@ -8,7 +15,13 @@ class PrettierIgnore {
     /* prettier-ignore */
     Integer result = oneRecord.get('Super Duper Long String That Will Break For Sure') + anotherRecord.get('Another Super Duper Long String That Will Break For Sure');
 
-    // The following node should be formatted
+    // The following node should be formatted, and should have empty line before it
+    Integer result = oneRecord.get('Super Duper Long String That Will Break For Sure') + anotherRecord.get('Another Super Duper Long String That Will Break For Sure');
+
+    // The following node should not be formatted
+    /* prettier-ignore */
+    Integer result = oneRecord.get('Super Duper Long String That Will Break For Sure') + anotherRecord.get('Another Super Duper Long String That Will Break For Sure');
+    // The following node should be formatted, and should not have empty line before it
     Integer result = oneRecord.get('Super Duper Long String That Will Break For Sure') + anotherRecord.get('Another Super Duper Long String That Will Break For Sure');
   }
 

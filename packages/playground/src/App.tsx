@@ -1,13 +1,10 @@
-/* eslint-disable @typescript-eslint/dot-notation */
 import Editor from "@monaco-editor/react";
-import endent from "endent";
-// eslint-disable-next-line import/no-extraneous-dependencies -- we will use shared Prettier install from the root
+import dedent from "dedent";
 import * as prettier from "prettier";
 import * as prettierApex from "prettier-plugin-apex";
 import { useEffect, useState } from "react";
 import { useDebounce } from "use-debounce";
 
-// eslint-disable-next-line import/no-relative-packages -- this is easiest way to get Prettier Apex version
 import { version } from "../../prettier-plugin-apex/package.json";
 import icon from "../static/icon.png";
 import { ClipboardButton } from "./Buttons.js";
@@ -50,7 +47,7 @@ function App() {
   const [tabWidth, setTabWidth] = useState(2);
   const [useTabs, setUseTabs] = useState(false);
   const [apexInsertFinalNewline, setApexInsertFinalNewline] = useState(true);
-  const [originalCode, setOriginalCode] = useState(endent`
+  const [originalCode, setOriginalCode] = useState(dedent`
     class HelloWorld {
       void hello() {
         Account[] accounts = [select id from account];

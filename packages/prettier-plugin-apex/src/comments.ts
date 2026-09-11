@@ -1,13 +1,14 @@
-/* eslint no-param-reassign: 0, no-plusplus: 0, no-else-return: 0, consistent-return: 0 */
 import type { AstPath, Doc, ParserOptions } from "prettier";
 import * as prettier from "prettier";
 
-import * as jorje from "../vendor/apex-ast-serializer/typings/jorje.d.js";
+import type * as jorje from "../vendor/apex-ast-serializer/typings/jorje.d.js";
 import { ALLOW_DANGLING_COMMENTS, APEX_TYPES } from "./constants.js";
+import type { EnrichedApexNode } from "./jorje-nodes.js";
+import type { ApexParserOptions, InlineCommentsFormat } from "./options.js";
 import {
-  AnnotatedComment,
-  GenericComment,
+  type AnnotatedComment,
   capitalize,
+  type GenericComment,
   isApexDocComment,
   isBinaryish,
   isInlineComment,
@@ -28,7 +29,7 @@ const {
  * @param comment the comment to print
  */
 function formatInlineComment(
-  formatOption: "none" | "spaced" | "trimed" | "strict",
+  formatOption: InlineCommentsFormat,
   comment: string,
 ): string {
   if (formatOption === "none") {
@@ -38,9 +39,11 @@ function formatInlineComment(
   const commentText = comment.substring("//".length);
   if (formatOption === "spaced") {
     return `//${commentText.startsWith(" ") ? commentText : ` ${commentText}`}`;
-  } else if (formatOption === "trimed") {
+  }
+  if (formatOption === "trimed") {
     return `// ${commentText.trim()}`;
-  } else if (formatOption === "strict") {
+  }
+  if (formatOption === "strict") {
     return `// ${capitalize(commentText.trim())}`;
   }
   throw new Error(
@@ -53,7 +56,7 @@ function formatInlineComment(
  * @param comment the comment to print.
  */
 function printApexDocComment(comment: jorje.BlockComment): Doc {
-  const lines: string[] = comment.value.split("\n");
+  const lines = comment.value.split("\n");
   return [
     join(
       hardline,
@@ -69,7 +72,7 @@ function printApexDocComment(comment: jorje.BlockComment): Doc {
 }
 
 export function isPrettierIgnore(comment: AnnotatedComment): boolean {
-  let content;
+  let content: string;
   if (comment["@class"] === APEX_TYPES.BLOCK_COMMENT) {
     // For simplicity sake we only support this format
     // /* prettier-ignore */
@@ -87,12 +90,15 @@ export function printComment(path: AstPath, options: ParserOptions): Doc {
   // This handles both Inline and Block Comments.
   // We don't just pass through the value because unlike other string literals,
   // this should not be escaped
-  let result;
+  let result: Doc;
   const node = path.getNode();
   if (isApexDocComment(node)) {
     result = printApexDocComment(node);
   } else if (isInlineComment(node.value)) {
-    result = formatInlineComment(options.apexFormatInlineComments, node.value);
+    result = formatInlineComment(
+      (options as ApexParserOptions).apexFormatInlineComments,
+      node.value,
+    );
   } else {
     result = node.value;
   }
@@ -121,16 +127,25 @@ export function printDanglingComment(
     return "";
   }
   fromPos += 1;
-  const leadingSpace = sourceCode.slice(fromPos, loc.startIndex);
-  const numberOfNewLines = isFirstComment
-    ? 0
-    : /* v8 ignore next 1 */
-      (leadingSpace.match(/\n/g) || []).length;
+  // Count newlines in the whitespace run before the comment, capped at the
+  // two that can actually be inserted - no need to slice the source or
+  // materialize every match.
+  let numberOfNewLines = 0;
+  if (!isFirstComment) {
+    let newlineIndex = sourceCode.indexOf("\n", fromPos);
+    while (
+      newlineIndex !== -1 &&
+      newlineIndex < loc.startIndex &&
+      numberOfNewLines < 2
+    ) {
+      numberOfNewLines += 1;
+      newlineIndex = sourceCode.indexOf("\n", newlineIndex + 1);
+    }
+  }
 
   if (numberOfNewLines > 0) {
     // If the leading space contains newlines, then add at most 2 new lines
-    const numberOfNewLinesToInsert = Math.min(numberOfNewLines, 2);
-    parts.push(...Array(numberOfNewLinesToInsert).fill(hardline));
+    parts.push(...Array(numberOfNewLines).fill(hardline));
   }
   if (comment["@class"] === APEX_TYPES.INLINE_COMMENT) {
     parts.push(lineSuffix(printComment(commentPath, options)));
@@ -148,12 +163,15 @@ export function printDanglingComment(
  * @param node The current node
  * @returns {boolean} whether a comment can be attached to this node or not.
  */
-export function canAttachComment(node: any): boolean {
+export function canAttachComment(node: EnrichedApexNode): boolean {
+  // Comment nodes (which carry a `location`, not a `loc`) and any node without a
+  // `loc` can't have comments attached. Check `@class` before narrowing on `loc`
+  // so the comment comparisons run against the full node union.
   return (
-    node.loc &&
-    node["@class"] &&
     node["@class"] !== APEX_TYPES.INLINE_COMMENT &&
-    node["@class"] !== APEX_TYPES.BLOCK_COMMENT
+    node["@class"] !== APEX_TYPES.BLOCK_COMMENT &&
+    "loc" in node &&
+    node.loc != null
   );
 }
 
@@ -179,17 +197,21 @@ export function willPrintOwnComments(path: AstPath): boolean {
   return !node || !node["@class"] || node["@class"] === APEX_TYPES.ANNOTATION;
 }
 
-export function getTrailingComments(node: any): AnnotatedComment[] {
-  return node.comments.filter((comment: AnnotatedComment) => comment.trailing);
+export function getTrailingComments(node: EnrichedApexNode): AnnotatedComment[] {
+  return (node.comments ?? []).filter((comment) => comment.trailing);
 }
+
+const ALLOW_DANGLING_COMMENTS_SET: Set<string> = new Set(
+  ALLOW_DANGLING_COMMENTS,
+);
 
 function handleDanglingComment(comment: AnnotatedComment): boolean {
   const { enclosingNode } = comment;
   if (
     enclosingNode &&
-    ALLOW_DANGLING_COMMENTS.indexOf(enclosingNode["@class"]) !== -1 &&
-    ((enclosingNode.stmnts && enclosingNode.stmnts.length === 0) ||
-      (enclosingNode.members && enclosingNode.members.length === 0))
+    ALLOW_DANGLING_COMMENTS_SET.has(enclosingNode["@class"]) &&
+    (("stmnts" in enclosingNode && enclosingNode.stmnts.length === 0) ||
+      ("members" in enclosingNode && enclosingNode.members.length === 0))
   ) {
     addDanglingComment(enclosingNode, comment, null);
     return true;
@@ -233,6 +255,7 @@ function handleWhereExpression(
     !followingNode ||
     !precedingNode["@class"] ||
     !followingNode["@class"] ||
+    !("loc" in precedingNode) ||
     enclosingNode["@class"] !== APEX_TYPES.WHERE_COMPOUND_EXPRESSION ||
     comment.location === undefined ||
     comment.location.startIndex === undefined
@@ -317,10 +340,10 @@ function handleBinaryishExpressionRightChildTrailingComment(
 function handleBlockStatementTrailingComment(
   comment: AnnotatedComment,
   options: ParserOptions,
-) {
+): boolean {
   const { precedingNode } = comment;
   if (
-    !options.apexForceCurly ||
+    !(options as ApexParserOptions).apexForceCurly ||
     comment.placement !== "endOfLine" ||
     !precedingNode
   ) {
@@ -335,15 +358,18 @@ function handleBlockStatementTrailingComment(
   }
   if (precedingNode["@class"] === APEX_TYPES.IF_ELSE_BLOCK) {
     const commentLeftStatement =
-      precedingNode.elseBlock?.value?.stmnt ??
-      precedingNode.ifBlocks[precedingNode.ifBlocks.length - 1].stmnt;
+      precedingNode.elseBlock.value?.stmnt ??
+      precedingNode.ifBlocks[precedingNode.ifBlocks.length - 1]?.stmnt;
+    if (!commentLeftStatement) {
+      return false;
+    }
     addTrailingComment(commentLeftStatement, comment);
     return true;
   }
   if (
     (precedingNode["@class"] === APEX_TYPES.WHILE_LOOP ||
       precedingNode["@class"] === APEX_TYPES.FOR_LOOP) &&
-    precedingNode.stmnt?.value
+    precedingNode.stmnt.value
   ) {
     addTrailingComment(precedingNode.stmnt.value, comment);
     return true;
@@ -385,6 +411,43 @@ function handleLongChainComment(comment: AnnotatedComment): boolean {
     enclosingNode.dottedExpr.value === precedingNode
   ) {
     addTrailingComment(precedingNode, comment);
+    return true;
+  }
+  return false;
+}
+
+// #1946 - when a comment is between the `continue`/`break`/`return` statement and
+// the `;` at the end of the line, it is technically a dangling comment to that
+// node. However, it makes more sense to simply classify it as a trailing
+// comment to the statement itself, i.e.:
+// ```
+// continue /* Comment */;
+// ```
+// should be formatted as:
+// ```
+// continue; /* Comment */
+// ```
+function handleContinueBreakDanglingComment(
+  comment: AnnotatedComment,
+): boolean {
+  const { enclosingNode } = comment;
+  if (!enclosingNode) {
+    return false;
+  }
+  if (
+    enclosingNode["@class"] === APEX_TYPES.CONTINUE_STATEMENT ||
+    enclosingNode["@class"] === APEX_TYPES.BREAK_STATEMENT
+  ) {
+    addTrailingComment(enclosingNode, comment);
+    return true;
+  }
+  if (
+    enclosingNode["@class"] === APEX_TYPES.RETURN_STATEMENT &&
+    // if there is some value that's returned, the comment is attached to that
+    // value, so we don't need to handle this case
+    !enclosingNode.expr.value
+  ) {
+    addTrailingComment(enclosingNode, comment);
     return true;
   }
   return false;
@@ -459,7 +522,8 @@ export function handleEndOfLineComment(
     handleBlockStatementLeadingComment(comment) ||
     handleWhereExpression(comment, sourceCode) ||
     handleModifierPrettierIgnoreComment(comment) ||
-    handleLongChainComment(comment)
+    handleLongChainComment(comment) ||
+    handleContinueBreakDanglingComment(comment)
   );
 }
 
@@ -480,7 +544,8 @@ export function handleRemainingComment(
   return (
     handleWhereExpression(comment, sourceCode) ||
     handleModifierPrettierIgnoreComment(comment) ||
-    handleLongChainComment(comment)
+    handleLongChainComment(comment) ||
+    handleContinueBreakDanglingComment(comment)
   );
 }
 
@@ -492,10 +557,5 @@ export function handleRemainingComment(
  */
 export function hasPrettierIgnore(path: AstPath): boolean {
   const node = path.getNode();
-  return (
-    node &&
-    node.comments &&
-    node.comments.length > 0 &&
-    node.comments.filter(isPrettierIgnore).length > 0
-  );
+  return node?.comments?.length > 0 && node.comments.some(isPrettierIgnore);
 }

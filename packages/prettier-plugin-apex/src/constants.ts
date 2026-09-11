@@ -1,3 +1,5 @@
+import type * as jorje from "../vendor/apex-ast-serializer/typings/jorje.d.js";
+
 export const APEX_TYPES = {
   TRIGGER_USAGE: "apex.jorje.data.ast.TriggerUsage" as const,
   LOCATION_IDENTIFIER:
@@ -260,6 +262,10 @@ export const APEX_TYPES = {
     "apex.jorje.data.soql.WhereExpr$WhereDistanceExpr" as const,
   DISTANCE_FUNCTION_EXPRESSION:
     "apex.jorje.data.soql.DistanceFunctionExpr" as const,
+  WHERE_FORMULA_EXPRESSION:
+    "apex.jorje.data.soql.WhereExpr$WhereFormulaExpr" as const,
+  FORMULA_FUNCTION_EXPRESSION:
+    "apex.jorje.data.soql.FormulaFunctionExpr" as const,
   GEOLOCATION_LITERAL:
     "apex.jorje.data.soql.Geolocation$GeolocationLiteral" as const,
   GEOLOCATION_EXPRESSION:
@@ -315,6 +321,18 @@ export const APEX_TYPES = {
   DATA_CATEGORY_OPERATOR: "apex.jorje.data.soql.DataCategoryOperator" as const,
   WITH_IDENTIFIER:
     "apex.jorje.data.soql.WithIdentifierClause$WithIdentifier" as const,
+  WITH_IDENTIFIER_TUPLE:
+    "apex.jorje.data.soql.WithIdentifierClause$WithIdentifierTuple" as const,
+  WITH_KEY_VALUE: "apex.jorje.data.soql.WithKeyValue" as const,
+  // The subtype @class strings must stay catalogued here so that PARENT_TYPES
+  // (built from Object.values(APEX_TYPES)) maps each one back to WITH_KEY_VALUE,
+  // which is what lets genericPrint's parent fallback dispatch them.
+  WITH_KEY_VALUE_BOOLEAN:
+    "apex.jorje.data.soql.WithKeyValue$BooleanKeyValue" as const,
+  WITH_KEY_VALUE_NUMBER:
+    "apex.jorje.data.soql.WithKeyValue$NumberKeyValue" as const,
+  WITH_KEY_VALUE_STRING:
+    "apex.jorje.data.soql.WithKeyValue$StringKeyValue" as const,
 };
 export const BINARY = {
   ADDITION: "+" as const,
@@ -381,24 +399,23 @@ export const QUERY = {
   "apex.jorje.data.soql.QueryOp$QueryGreaterThan": ">" as const,
   "apex.jorje.data.soql.QueryOp$QueryIn": "IN" as const,
   "apex.jorje.data.soql.QueryOp$QueryNotIn": "NOT IN" as const,
-};
+} satisfies Record<jorje.QueryOp["@class"], string>;
 export const ORDER = {
   "apex.jorje.data.soql.Order$OrderDesc": "DESC" as const,
   "apex.jorje.data.soql.Order$OrderAsc": "ASC" as const,
-};
+} satisfies Record<jorje.Order["@class"], string>;
 export const ORDER_NULL = {
   "apex.jorje.data.soql.OrderNull$OrderNullFirst": "NULLS FIRST" as const,
   "apex.jorje.data.soql.OrderNull$OrderNullLast": "NULLS LAST" as const,
-};
+} satisfies Record<jorje.OrderNull["@class"], string>;
 export const QUERY_WHERE = {
   "apex.jorje.data.soql.WhereCompoundOp$QueryAnd": "AND" as const,
   "apex.jorje.data.soql.WhereCompoundOp$QueryOr": "OR" as const,
-};
+} satisfies Record<jorje.WhereCompoundOp["@class"], string>;
 export const MODIFIER = {
   "apex.jorje.data.ast.Modifier$PublicModifier": "public" as const,
   "apex.jorje.data.ast.Modifier$PrivateModifier": "private" as const,
   "apex.jorje.data.ast.Modifier$VirtualModifier": "virtual" as const,
-  "apex.jorje.data.ast.Modifier$HiddenModifier": "hidden" as const,
   "apex.jorje.data.ast.Modifier$ProtectedModifier": "protected" as const,
   "apex.jorje.data.ast.Modifier$AbstractModifier": "abstract" as const,
   "apex.jorje.data.ast.Modifier$StaticModifier": "static" as const,
@@ -416,7 +433,7 @@ export const MODIFIER = {
   // This is a special case, it is actually handled in a separate method, but
   // we still need to specify it here to satisfy Typescript exhaustive check.
   "apex.jorje.data.ast.Modifier$Annotation": "" as const,
-};
+} satisfies Record<jorje.Modifier["@class"], string>;
 export const DATA_CATEGORY = {
   "apex.jorje.data.soql.DataCategoryOperator$DataCategoryAt": "AT" as const,
   "apex.jorje.data.soql.DataCategoryOperator$DataCategoryAbove":
@@ -425,7 +442,7 @@ export const DATA_CATEGORY = {
     "BELOW" as const,
   "apex.jorje.data.soql.DataCategoryOperator$DataCategoryAboveOrBelow":
     "ABOVE_OR_BELOW" as const,
-};
+} satisfies Record<jorje.DataCategoryOperator["@class"], string>;
 export const TRIGGER_USAGE = {
   BEFORE_DELETE: "before delete" as const,
   BEFORE_INSERT: "before insert" as const,
